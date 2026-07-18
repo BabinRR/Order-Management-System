@@ -1,0 +1,145 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Syne', ui-sans-serif, system-ui, sans-serif;
+
+    --color-ink: #1a1f1c;
+    --color-ink-soft: #3d4740;
+    --color-mist: #eef2ef;
+    --color-fog: #d8e0da;
+    --color-surface: #f6f8f6;
+    --color-panel: #ffffff;
+    --color-sage: #3d6b4f;
+    --color-sage-dark: #2a4a37;
+    --color-sage-light: #e4efe8;
+    --color-ember: #c45c26;
+    --color-ember-soft: #fdf0e8;
+    --color-gold: #b8892c;
+}
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        font-family: var(--font-sans);
+        color: var(--color-ink);
+        background-color: var(--color-surface);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    .font-display {
+        font-family: var(--font-display);
+    }
+}
+
+@layer utilities {
+    .admin-bg {
+        background-color: var(--color-surface);
+        background-image:
+            radial-gradient(ellipse 80% 50% at 0% 0%, rgba(61, 107, 79, 0.08), transparent),
+            radial-gradient(ellipse 60% 40% at 100% 100%, rgba(196, 92, 38, 0.06), transparent),
+            linear-gradient(180deg, #f3f6f3 0%, #eef2ef 100%);
+    }
+
+    .sidebar-bg {
+        background:
+            linear-gradient(165deg, #1e2a22 0%, #243028 45%, #1a221c 100%);
+    }
+
+    .stat-shine {
+        background:
+            linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
+    }
+
+    .bar-fill {
+        transform-origin: bottom;
+        animation: grow-bar 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .fade-up {
+        animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .fade-up-delay-1 {
+        animation-delay: 0.08s;
+    }
+
+    .fade-up-delay-2 {
+        animation-delay: 0.16s;
+    }
+
+    .fade-up-delay-3 {
+        animation-delay: 0.24s;
+    }
+
+    .fade-up-delay-4 {
+        animation-delay: 0.32s;
+    }
+
+    .modal-enter {
+        animation: modal-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .toast-slide {
+        animation: toast-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+}
+
+@keyframes grow-bar {
+    from {
+        transform: scaleY(0);
+        opacity: 0.4;
+    }
+    to {
+        transform: scaleY(1);
+        opacity: 1;
+    }
+}
+
+@keyframes fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes modal-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+[x-cloak] {
+    display: none !important;
+}
