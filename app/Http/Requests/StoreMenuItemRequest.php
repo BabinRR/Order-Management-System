@@ -23,6 +23,7 @@ class StoreMenuItemRequest extends FormRequest
             'price' => ['required', 'integer', 'min:0', 'max:1000000'],
             'description' => ['nullable', 'string', 'max:1000'],
             'status' => ['required', Rule::in(['Available', 'Sold Out', 'Hidden'])],
+            'image' => ['nullable', 'image', 'max:5120'],
         ];
     }
 }

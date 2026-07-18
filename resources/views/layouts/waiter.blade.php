@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', 'Waiter') — {{ config('app.name', 'KitchenDesk') }}</title>
+
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=manrope:400,500,600,700,800|syne:600,700,800" rel="stylesheet" />
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body
+    class="admin-bg min-h-screen text-ink"
+    x-data="{
+        sidebarOpen: false,
+        toast: @js(session('status')),
+        showToast(message) { this.toast = message; clearTimeout(this._t); this._t = setTimeout(() => this.toast = null, 3000); }
+    }"
+    x-init="if (toast) showToast(toast)"
+    @toast.window="showToast($event.detail)"
+>
+    <div class="flex min-h-screen">
+        <div
+            x-show="sidebarOpen"
+            x-cloak
+            x-transition.opacity
+            @click="sidebarOpen = false"
+            class="fixed inset-0 z-40 bg-ink/50 backdrop-blur-sm lg:hidden"
+        ></div>
+
+        <div class="hidden w-[264px] shrink-0 lg:block" aria-hidden="true"></div>
+
+        <aside
+            class="sidebar-bg fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col text-white shadow-2xl transition-transform duration-300 lg:translate-x-0 lg:shadow-none"
+            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+        >
+            <div class="flex items-center gap-3 px-6 py-6">
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#a67c52] to-[#5d4037] font-display text-lg font-extrabold shadow-lg ring-1 ring-white/10">
+                    W
+                </div>
+                <div>
+                    <p class="font-display text-lg font-extrabold leading-none tracking-tight">KitchenDesk</p>
+                    <p class="mt-1 text-[11px] font-medium uppercase tracking-[0.18em] text-white/40">Waiter Floor</p>
+                </div>
+            </div>
+
+            <div class="mx-4 mb-2 border-t border-white/10"></div>
+
+            <nav class="flex flex-1 flex-col gap-1 px-4 py-3">
+                <p class="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">Floor</p>
+                @php
+                    $links = [
+                        ['route' => 'waiter.dashboard', 'label' => 'Dashboard', 'match' => 'waiter.dashboard', 'icon' => 'home'],
+                        ['route' => 'waiter.orders.index', 'label' => 'Orders', 'match' => 'waiter.orders.*', 'icon' => 'orders'],
+                        ['route' => 'waiter.bills.index', 'label' => 'Bills & Pay', 'match' => 'waiter.bills.*', 'icon' => 'bills'],
+                        ['route' => 'waiter.profile.edit', 'label' => 'My Profile', 'match' => 'waiter.profile.*', 'icon' => 'profile'],
+                    ];
+                @endphp
+
+                @foreach ($links as $link)
+                    @php $active = request()->routeIs($link['match']); @endphp
+                    <a
+                        href="{{ route($link['route']) }}"
+                        @class([
+                            'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition',
+                            'bg-white/12 text-white shadow-sm' => $active,
+                            'text-white/60 hover:bg-white/8 hover:text-white' => ! $active,
+                        ])
+                    >
+                        @if ($active)
+                            <span class="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-[#d4a574]"></span>
+                        @endif
+                        <span @class([
+                            'flex h-8 w-8 items-center justify-center rounded-lg transition',
+                            'bg-[#8b5e3c] text-white' => $active,
+                            'bg-white/8 text-white/70 group-hover:bg-white/12' => ! $active,
+                        ])>
+                            @if ($link['icon'] === 'home')
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                            @elseif ($link['icon'] === 'orders')
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                            @elseif ($link['icon'] === 'bills')
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            @else
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            @endif
+                        </span>
+                        {{ $link['label'] }}
+                    </a>
+                @endforeach
+            </nav>
+
+            <a href="{{ route('waiter.profile.edit') }}" class="m-4 block rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 transition hover:bg-white/8">
+                <div class="flex items-center gap-3">
+                    @if (auth()->user()->avatar_url)
+                        <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="h-9 w-9 rounded-full object-cover">
+                    @else
+                        <div class="flex h-9 w-9 items-center justify-center rounded-full bg-[#8b5e3c] text-xs font-bold text-white">
+                            {{ auth()->user()->initials }}
+                        </div>
+                    @endif
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-semibold text-white/90">{{ auth()->user()->name }}</p>
+                        <p class="truncate text-[11px] text-white/40">{{ auth()->user()->title ?: 'Waiter' }}</p>
+                    </div>
+                </div>
+            </a>
+        </aside>
+
+        <div class="flex min-w-0 flex-1 flex-col">
+            <header class="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-[#d9cbb8]/70 bg-[#f7f0e8]/80 px-4 py-3.5 backdrop-blur-md sm:px-6 lg:px-8">
+                <div class="flex items-center gap-3">
+                    <button
+                        type="button"
+                        @click="sidebarOpen = true"
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#d9cbb8] bg-white text-ink shadow-sm lg:hidden"
+                        aria-label="Open menu"
+                    >
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.15em] text-ink-soft/45">@yield('eyebrow', 'Floor')</p>
+                        <h1 class="font-display text-xl font-extrabold tracking-tight text-ink sm:text-2xl">@yield('heading')</h1>
+                    </div>
+                </div>
+                <div class="hidden items-center gap-2 rounded-xl border border-[#d9cbb8] bg-white px-3 py-2 text-xs font-medium text-ink-soft/70 shadow-sm sm:flex">
+                    <span class="h-2 w-2 rounded-full bg-[#8b5e3c]"></span>
+                    {{ now()->format('D, M j · g:i A') }}
+                </div>
+            </header>
+
+            <main class="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+                @yield('content')
+            </main>
+        </div>
+    </div>
+
+    <div
+        x-show="toast"
+        x-cloak
+        x-transition
+        class="toast-slide fixed bottom-6 right-6 z-[60] flex max-w-sm items-center gap-3 rounded-2xl bg-ink px-4 py-3 text-sm font-medium text-white shadow-2xl ring-1 ring-white/10"
+    >
+        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-[#8b5e3c]">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </span>
+        <span x-text="toast"></span>
+    </div>
+</body>
+</html>

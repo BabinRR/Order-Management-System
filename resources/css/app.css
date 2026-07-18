@@ -9,18 +9,20 @@
     --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
     --font-display: 'Syne', ui-sans-serif, system-ui, sans-serif;
 
-    --color-ink: #1a1f1c;
-    --color-ink-soft: #3d4740;
-    --color-mist: #eef2ef;
-    --color-fog: #d8e0da;
-    --color-surface: #f6f8f6;
-    --color-panel: #ffffff;
-    --color-sage: #3d6b4f;
-    --color-sage-dark: #2a4a37;
-    --color-sage-light: #e4efe8;
-    --color-ember: #c45c26;
-    --color-ember-soft: #fdf0e8;
-    --color-gold: #b8892c;
+    --color-ink: #2c2118;
+    --color-ink-soft: #5c4033;
+    --color-mist: #f0e6da;
+    --color-fog: #d9cbb8;
+    --color-surface: #f7f0e8;
+    --color-panel: #fffaf4;
+    --color-wood: #8b5e3c;
+    --color-wood-dark: #5d4037;
+    --color-wood-deeper: #3e2723;
+    --color-wood-light: #ede0d0;
+    --color-wood-mid: #a67c52;
+    --color-ember: #a0522d;
+    --color-ember-soft: #f5e6d8;
+    --color-gold: #c4a574;
 }
 
 @layer base {
@@ -45,21 +47,67 @@
 
 @layer utilities {
     .admin-bg {
-        background-color: var(--color-surface);
+        background-color: #f7f0e8;
         background-image:
-            radial-gradient(ellipse 80% 50% at 0% 0%, rgba(61, 107, 79, 0.08), transparent),
-            radial-gradient(ellipse 60% 40% at 100% 100%, rgba(196, 92, 38, 0.06), transparent),
-            linear-gradient(180deg, #f3f6f3 0%, #eef2ef 100%);
+            repeating-linear-gradient(
+                90deg,
+                rgba(139, 94, 60, 0.035) 0px,
+                rgba(139, 94, 60, 0.035) 1px,
+                transparent 1px,
+                transparent 7px
+            ),
+            repeating-linear-gradient(
+                0deg,
+                rgba(93, 64, 55, 0.025) 0px,
+                rgba(93, 64, 55, 0.025) 1px,
+                transparent 1px,
+                transparent 11px
+            ),
+            radial-gradient(ellipse 70% 50% at 0% 0%, rgba(166, 124, 82, 0.14), transparent),
+            radial-gradient(ellipse 55% 40% at 100% 100%, rgba(160, 82, 45, 0.08), transparent),
+            linear-gradient(180deg, #faf4ec 0%, #f0e6da 100%);
     }
 
     .sidebar-bg {
-        background:
-            linear-gradient(165deg, #1e2a22 0%, #243028 45%, #1a221c 100%);
+        background-color: #3e2723;
+        background-image:
+            repeating-linear-gradient(
+                92deg,
+                rgba(255, 255, 255, 0.03) 0px,
+                rgba(255, 255, 255, 0.03) 1px,
+                transparent 1px,
+                transparent 8px
+            ),
+            repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.08) 0px,
+                rgba(0, 0, 0, 0.08) 2px,
+                transparent 2px,
+                transparent 14px
+            ),
+            linear-gradient(
+                165deg,
+                #4e342e 0%,
+                #3e2723 40%,
+                #2c1b16 100%
+            );
+    }
+
+    .wood-panel {
+        background-color: #fffaf4;
+        background-image:
+            repeating-linear-gradient(
+                88deg,
+                rgba(139, 94, 60, 0.03) 0px,
+                rgba(139, 94, 60, 0.03) 1px,
+                transparent 1px,
+                transparent 9px
+            );
     }
 
     .stat-shine {
         background:
-            linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
+            linear-gradient(135deg, rgba(255, 250, 244, 0.95) 0%, rgba(237, 224, 208, 0.55) 100%);
     }
 
     .bar-fill {

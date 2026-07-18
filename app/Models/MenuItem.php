@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\MenuItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MenuItem extends Model
 {
-    /** @use HasFactory<\Database\Factories\MenuItemFactory> */
+    /** @use HasFactory<MenuItemFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -16,6 +17,8 @@ class MenuItem extends Model
         'category',
         'price',
         'description',
+        'image_url',
+        'image_public_id',
         'status',
     ];
 

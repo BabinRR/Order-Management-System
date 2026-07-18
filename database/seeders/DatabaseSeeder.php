@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\MenuItem;
 use App\Models\Order;
+use App\Models\User;
 use App\Models\Worker;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -14,6 +15,28 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
+        User::updateOrCreate(
+            ['email' => 'admin@kitchen.local'],
+            [
+                'name' => 'Kitchen Admin',
+                'phone' => '+977 980-100-0000',
+                'title' => 'Owner',
+                'role' => User::ROLE_ADMIN,
+                'password' => 'password',
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'waiter@kitchen.local'],
+            [
+                'name' => 'Rohan Waiter',
+                'phone' => '+977 980-111-2203',
+                'title' => 'Waiter',
+                'role' => User::ROLE_WAITER,
+                'password' => 'password',
+            ]
+        );
+
         $workers = [
             ['name' => 'Aarav Sharma', 'role' => 'Head Chef', 'email' => 'aarav@kitchen.local', 'phone' => '+977 980-111-2201', 'shift' => 'Morning', 'status' => 'Active'],
             ['name' => 'Maya Thapa', 'role' => 'Sous Chef', 'email' => 'maya@kitchen.local', 'phone' => '+977 980-111-2202', 'shift' => 'Evening', 'status' => 'Active'],
@@ -24,7 +47,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($workers as $worker) {
-            Worker::create($worker);
+            Worker::updateOrCreate(['email' => $worker['email']], $worker);
         }
 
         $menuItems = [
@@ -39,10 +62,14 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($menuItems as $item) {
-            MenuItem::create($item);
+            MenuItem::updateOrCreate(['name' => $item['name']], $item);
         }
 
-        $this->seedOrders();
+        if (Order::query()->doesntExist()) {
+            $this->seedOrders();
+        }
+
+        $this->seedFloorOrders();
     }
 
     private function seedOrders(): void
@@ -58,6 +85,13 @@ class DatabaseSeeder extends Seeder
             for ($i = 0; $i < $ordersForDay; $i++) {
                 $itemsCount = fake()->numberBetween(1, 6);
                 $createdAt = $date->copy()->setTime(fake()->numberBetween(10, 22), fake()->numberBetween(0, 59));
+                $status = fake()->randomElement(['Completed', 'Completed', 'Completed', 'Preparing', 'Served']);
+                $service = match ($status) {
+                    'Preparing' => Order::SERVICE_PREPARING,
+                    'Served', 'Completed' => Order::SERVICE_SERVED,
+                    default => Order::SERVICE_PENDING,
+                };
+                $payment = $status === 'Completed' ? Order::PAYMENT_PAID : Order::PAYMENT_UNPAID;
 
                 Order::create([
                     'reference' => '#'.$reference++,
@@ -66,11 +100,52 @@ class DatabaseSeeder extends Seeder
                     'worker_id' => fake()->randomElement($workerIds),
                     'items_count' => $itemsCount,
                     'total' => $itemsCount * fake()->numberBetween(300, 900),
-                    'status' => fake()->randomElement(['Completed', 'Completed', 'Completed', 'Preparing', 'Served']),
+                    'status' => $status,
+                    'service_status' => $service,
+                    'payment_status' => $payment,
+                    'payment_method' => $payment === Order::PAYMENT_PAID ? 'cash' : null,
+                    'served_at' => $service === Order::SERVICE_SERVED ? $createdAt : null,
+                    'paid_at' => $payment === Order::PAYMENT_PAID ? $createdAt : null,
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ]);
             }
+        }
+    }
+
+    private function seedFloorOrders(): void
+    {
+        $menuItemId = MenuItem::query()->value('id');
+        $workerId = Worker::query()->value('id');
+
+        if (! $menuItemId) {
+            return;
+        }
+
+        $samples = [
+            ['reference' => '#W1001', 'service_status' => Order::SERVICE_PENDING, 'payment_status' => Order::PAYMENT_UNPAID, 'status' => 'Pending'],
+            ['reference' => '#W1002', 'service_status' => Order::SERVICE_PREPARING, 'payment_status' => Order::PAYMENT_UNPAID, 'status' => 'Preparing'],
+            ['reference' => '#W1003', 'service_status' => Order::SERVICE_SERVED, 'payment_status' => Order::PAYMENT_UNPAID, 'status' => 'Served'],
+            ['reference' => '#W1004', 'service_status' => Order::SERVICE_SERVED, 'payment_status' => Order::PAYMENT_UNPAID, 'status' => 'Served'],
+        ];
+
+        foreach ($samples as $index => $sample) {
+            Order::updateOrCreate(
+                ['reference' => $sample['reference']],
+                [
+                    'table_number' => (string) ($index + 3),
+                    'menu_item_id' => $menuItemId,
+                    'worker_id' => $workerId,
+                    'items_count' => fake()->numberBetween(2, 5),
+                    'total' => fake()->numberBetween(800, 3200),
+                    'status' => $sample['status'],
+                    'service_status' => $sample['service_status'],
+                    'payment_status' => $sample['payment_status'],
+                    'payment_method' => null,
+                    'served_at' => $sample['service_status'] === Order::SERVICE_SERVED ? now()->subMinutes(20) : null,
+                    'paid_at' => null,
+                ]
+            );
         }
     }
 }
