@@ -1,8 +1,8 @@
 @extends('layouts.waiter')
 
-@section('title', 'Bill '.$order->reference)
+@section('title', 'Table '.$table.' Bill')
 @section('eyebrow', 'Payment')
-@section('heading', 'Bill '.$order->reference)
+@section('heading', 'Table '.$table.' Bill')
 
 @section('content')
 <div class="mx-auto max-w-2xl space-y-5">
@@ -15,17 +15,14 @@
         <div class="border-b border-[#f0e6da] bg-[#f7f0e8]/80 px-5 py-4 sm:px-6">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <p class="font-display text-2xl font-extrabold text-ink">{{ $order->reference }}</p>
-                    <p class="mt-1 text-sm text-ink-soft/60">Table {{ $order->table_number }} · {{ $order->created_at->format('M j, g:i A') }}</p>
+                    <p class="font-display text-2xl font-extrabold text-ink">Table {{ $table }}</p>
+                    <p class="mt-1 text-sm text-ink-soft/60">{{ $orders->count() }} order line{{ $orders->count() === 1 ? '' : 's' }}</p>
                 </div>
-                <div class="flex flex-wrap gap-2">
-                    <span class="rounded-lg bg-[#ede0d0] px-2.5 py-1 text-xs font-semibold capitalize text-[#5d4037]">{{ $order->service_status }}</span>
-                    <span @class([
-                        'rounded-lg px-2.5 py-1 text-xs font-semibold capitalize',
-                        'bg-[#f5e6d8] text-[#a0522d]' => $order->payment_status === 'unpaid',
-                        'bg-[#ede0d0] text-[#5d4037]' => $order->payment_status === 'paid',
-                    ])>{{ $order->payment_status }}</span>
-                </div>
+                <span @class([
+                    'rounded-lg px-2.5 py-1 text-xs font-semibold',
+                    'bg-[#f5e6d8] text-[#a0522d]' => $unpaidOrders->isNotEmpty(),
+                    'bg-[#ede0d0] text-[#5d4037]' => $unpaidOrders->isEmpty(),
+                ])>{{ $unpaidOrders->isNotEmpty() ? 'Unpaid' : 'Paid' }}</span>
             </div>
         </div>
 
@@ -35,37 +32,43 @@
                     <tr class="border-b border-[#f0e6da] text-left text-xs uppercase tracking-wider text-ink-soft/50">
                         <th class="pb-2 font-semibold">Item</th>
                         <th class="pb-2 text-right font-semibold">Qty</th>
+                        <th class="pb-2 text-right font-semibold">Status</th>
                         <th class="pb-2 text-right font-semibold">Amount</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="border-b border-[#f0e6da]">
-                        <td class="py-3 font-medium text-ink">{{ $order->menuItem?->name ?? 'Menu item' }}</td>
-                        <td class="py-3 text-right text-ink-soft">{{ $order->items_count }}</td>
-                        <td class="py-3 text-right font-semibold text-ink">Rs {{ number_format($order->total) }}</td>
-                    </tr>
+                    @foreach ($orders as $order)
+                        <tr class="border-b border-[#f0e6da]">
+                            <td class="py-3">
+                                <p class="font-medium text-ink">{{ $order->menuItem?->name ?? 'Menu item' }}</p>
+                                <p class="text-xs text-ink-soft/50">{{ $order->reference }}</p>
+                            </td>
+                            <td class="py-3 text-right text-ink-soft">{{ $order->items_count }}</td>
+                            <td class="py-3 text-right text-xs capitalize text-ink-soft/60">
+                                {{ $order->service_status }} / {{ $order->payment_status }}
+                            </td>
+                            <td class="py-3 text-right font-semibold text-ink">Rs {{ number_format($order->total) }}</td>
+                        </tr>
+                    @endforeach
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="2" class="pt-4 text-right text-sm font-semibold text-ink-soft">Total due</td>
-                        <td class="pt-4 text-right font-display text-2xl font-extrabold text-[#8b5e3c]">Rs {{ number_format($order->total) }}</td>
+                        <td colspan="3" class="pt-4 text-right text-sm font-semibold text-ink-soft">
+                            {{ $unpaidOrders->isNotEmpty() ? 'Total due' : 'Total paid' }}
+                        </td>
+                        <td class="pt-4 text-right font-display text-2xl font-extrabold text-[#8b5e3c]">
+                            Rs {{ number_format($unpaidOrders->isNotEmpty() ? $unpaidTotal : $orders->sum('total')) }}
+                        </td>
                     </tr>
                 </tfoot>
             </table>
 
-            @if ($order->payment_status === 'paid')
-                <div class="mt-6 rounded-xl bg-[#ede0d0] px-4 py-3 text-sm text-[#5d4037]">
-                    Paid via <span class="font-semibold capitalize">{{ $order->payment_method }}</span>
-                    @if ($order->paid_at)
-                        on {{ $order->paid_at->format('M j, g:i A') }}
-                    @endif
-                </div>
-            @else
-                <form method="POST" action="{{ route('waiter.bills.pay', $order) }}" class="mt-6 space-y-4">
+            @if ($unpaidOrders->isNotEmpty())
+                <form method="POST" action="{{ route('waiter.bills.table.pay', $table) }}" class="mt-6 space-y-4">
                     @csrf
                     <div>
                         <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Payment method</p>
-                        <div class="grid grid-cols-3 gap-2">
+                        <div class="grid grid-cols-2 gap-2">
                             @foreach ($methods as $method)
                                 <label class="cursor-pointer">
                                     <input type="radio" name="payment_method" value="{{ $method }}" class="peer sr-only" @checked(old('payment_method', 'cash') === $method) required>
@@ -78,18 +81,20 @@
                         @error('payment_method') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
                     </div>
 
-                    @if ($order->service_status !== 'served')
-                        <p class="rounded-xl bg-[#f5e6d8] px-3 py-2 text-xs text-[#a0522d]">
-                            This order isn’t marked served yet — collecting payment will also mark it served.
-                        </p>
-                    @endif
-
                     <button type="submit" class="w-full rounded-xl bg-gradient-to-br from-[#8b5e3c] to-[#5d4037] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95">
-                        Collect Rs {{ number_format($order->total) }}
+                        Collect Rs {{ number_format($unpaidTotal) }} for table {{ $table }}
                     </button>
                 </form>
+            @else
+                <div class="mt-6 rounded-xl bg-[#ede0d0] px-4 py-3 text-sm text-[#5d4037]">
+                    This table’s bill is fully paid.
+                </div>
             @endif
         </div>
     </section>
+
+    <a href="{{ route('waiter.orders.index', ['table' => $table]) }}" class="inline-flex text-sm font-semibold text-[#8b5e3c] hover:underline">
+        View table {{ $table }} orders →
+    </a>
 </div>
 @endsection

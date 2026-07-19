@@ -37,6 +37,15 @@ class OrderFactory extends Factory
         ];
     }
 
+    public function pending(): static
+    {
+        return $this->state(fn () => [
+            'status' => 'Pending',
+            'service_status' => Order::SERVICE_PENDING,
+            'payment_status' => Order::PAYMENT_UNPAID,
+        ]);
+    }
+
     public function preparing(): static
     {
         return $this->state(fn () => [

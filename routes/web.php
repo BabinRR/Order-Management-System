@@ -73,8 +73,11 @@ Route::prefix('waiter')->name('waiter.')->middleware(['auth', 'role:waiter'])->g
     Route::get('/orders', [WaiterOrderController::class, 'index'])->name('orders.index');
     Route::patch('/orders/{order}/preparing', [WaiterOrderController::class, 'markPreparing'])->name('orders.preparing');
     Route::patch('/orders/{order}/served', [WaiterOrderController::class, 'markServed'])->name('orders.served');
+    Route::patch('/orders/table/{table}/served', [WaiterOrderController::class, 'markTableServed'])->name('orders.table.served');
 
     Route::get('/bills', [BillController::class, 'index'])->name('bills.index');
+    Route::get('/bills/table/{table}', [BillController::class, 'showTable'])->name('bills.table');
+    Route::post('/bills/table/{table}/pay', [BillController::class, 'collectTable'])->name('bills.table.pay');
     Route::get('/bills/{order}', [BillController::class, 'show'])->name('bills.show');
     Route::post('/bills/{order}/pay', [BillController::class, 'collect'])->name('bills.pay');
 

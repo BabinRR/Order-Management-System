@@ -42,14 +42,14 @@
                 </div>
                 <div>
                     <p class="font-display text-lg font-extrabold leading-none tracking-tight">KitchenDesk</p>
-                    <p class="mt-1 text-[11px] font-medium uppercase tracking-[0.18em] text-white/40">Waiter Floor</p>
+                    <p class="mt-1 text-[11px] font-medium uppercase tracking-[0.18em] text-white/40">Waiter</p>
                 </div>
             </div>
 
             <div class="mx-4 mb-2 border-t border-white/10"></div>
 
             <nav class="flex flex-1 flex-col gap-1 px-4 py-3">
-                <p class="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">Floor</p>
+                <p class="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">Waiter</p>
                 @php
                     $links = [
                         ['route' => 'waiter.dashboard', 'label' => 'Dashboard', 'match' => 'waiter.dashboard', 'icon' => 'home'],
@@ -121,7 +121,7 @@
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
                     <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.15em] text-ink-soft/45">@yield('eyebrow', 'Floor')</p>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.15em] text-ink-soft/45">@yield('eyebrow', 'Waiter')</p>
                         <h1 class="font-display text-xl font-extrabold tracking-tight text-ink sm:text-2xl">@yield('heading')</h1>
                     </div>
                 </div>

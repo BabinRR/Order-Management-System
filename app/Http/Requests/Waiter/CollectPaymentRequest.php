@@ -18,7 +18,7 @@ class CollectPaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_method' => ['required', Rule::in(['cash', 'card', 'online'])],
+            'payment_method' => ['required', Rule::in(['cash', 'online'])],
         ];
     }
 }

@@ -31,7 +31,7 @@ class BillController extends Controller
             'unpaidOrders' => $unpaid,
             'paidOrders' => $paid,
             'unpaidTotal' => (int) $unpaid->sum('total'),
-            'methods' => ['cash', 'card', 'online'],
+            'methods' => ['cash', 'online'],
         ]);
     }
 

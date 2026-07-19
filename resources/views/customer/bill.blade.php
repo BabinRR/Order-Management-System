@@ -55,10 +55,10 @@
                         @csrf
                         <div>
                             <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Pay with</p>
-                            <div class="grid grid-cols-3 gap-2">
+                            <div class="grid grid-cols-2 gap-2">
                                 @foreach ($methods as $method)
                                     <label class="cursor-pointer">
-                                        <input type="radio" name="payment_method" value="{{ $method }}" class="peer sr-only" @checked(old('payment_method', 'card') === $method) required>
+                                        <input type="radio" name="payment_method" value="{{ $method }}" class="peer sr-only" @checked(old('payment_method', 'cash') === $method) required>
                                         <span class="flex items-center justify-center rounded-xl border border-[#d9cbb8] bg-[#f7f0e8] px-3 py-3 text-sm font-semibold capitalize text-ink-soft transition peer-checked:border-[#8b5e3c] peer-checked:bg-[#8b5e3c] peer-checked:text-white">
                                             {{ $method }}
                                         </span>

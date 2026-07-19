@@ -7,6 +7,8 @@ use App\Http\Requests\Waiter\CollectPaymentRequest;
 use App\Models\Order;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class BillController extends Controller
@@ -14,6 +16,7 @@ class BillController extends Controller
     public function index(Request $request): View
     {
         $filter = (string) $request->query('filter', 'unpaid');
+        $table = (string) $request->query('table', '');
 
         $billsQuery = Order::query()->with(['menuItem', 'server']);
 
@@ -25,35 +28,98 @@ class BillController extends Controller
                 ->latest('updated_at');
         }
 
+        if ($table !== '') {
+            $billsQuery->where('table_number', $table);
+        }
+
+        $orders = $billsQuery
+            ->orderByRaw('CAST(table_number AS INTEGER)')
+            ->get();
+
+        $tables = $orders
+            ->groupBy(fn (Order $order) => (string) ($order->table_number ?: '—'))
+            ->map(function (Collection $items, string $tableNumber) {
+                return (object) [
+                    'table_number' => $tableNumber,
+                    'orders' => $items->values(),
+                    'item_count' => $items->sum('items_count'),
+                    'total' => $items->sum('total'),
+                    'unpaid' => $items->where('payment_status', Order::PAYMENT_UNPAID)->isNotEmpty(),
+                ];
+            })
+            ->sortBy(fn ($tableGroup) => is_numeric($tableGroup->table_number) ? (int) $tableGroup->table_number : PHP_INT_MAX)
+            ->values();
+
+        $availableTables = Order::query()
+            ->select('table_number')
+            ->whereNotNull('table_number')
+            ->distinct()
+            ->orderByRaw('CAST(table_number AS INTEGER)')
+            ->pluck('table_number');
+
         return view('waiter.bills', [
-            'bills' => $billsQuery->get(),
+            'tables' => $tables,
             'filter' => $filter,
+            'activeTable' => $table,
+            'availableTables' => $availableTables,
             'unpaidTotal' => (int) Order::query()->where('payment_status', Order::PAYMENT_UNPAID)->sum('total'),
         ]);
     }
 
     public function show(Order $order): View
     {
-        $order->load(['menuItem', 'server']);
+        return $this->showTable((string) $order->table_number);
+    }
+
+    public function showTable(string $table): View
+    {
+        $orders = Order::query()
+            ->with(['menuItem', 'server'])
+            ->where('table_number', $table)
+            ->latest()
+            ->get();
+
+        abort_if($orders->isEmpty(), 404);
+
+        $unpaid = $orders->where('payment_status', Order::PAYMENT_UNPAID);
 
         return view('waiter.bill-show', [
-            'order' => $order,
-            'methods' => ['cash', 'card', 'online'],
+            'table' => $table,
+            'orders' => $orders,
+            'unpaidOrders' => $unpaid,
+            'unpaidTotal' => (int) $unpaid->sum('total'),
+            'methods' => ['cash', 'online'],
         ]);
     }
 
     public function collect(CollectPaymentRequest $request, Order $order): RedirectResponse
     {
-        if ($order->payment_status === Order::PAYMENT_PAID) {
+        return $this->collectTable($request, (string) $order->table_number);
+    }
+
+    public function collectTable(CollectPaymentRequest $request, string $table): RedirectResponse
+    {
+        $unpaid = Order::query()
+            ->where('table_number', $table)
+            ->where('payment_status', Order::PAYMENT_UNPAID)
+            ->get();
+
+        if ($unpaid->isEmpty()) {
             return redirect()
-                ->route('waiter.bills.show', $order)
-                ->with('status', 'This bill is already paid.');
+                ->route('waiter.bills.table', $table)
+                ->with('status', "Table {$table} has nothing left to pay.");
         }
 
-        $order->markPaid($request->validated('payment_method'), $request->user());
+        $method = $request->validated('payment_method');
+
+        DB::transaction(function () use ($unpaid, $method, $request): void {
+            foreach ($unpaid as $order) {
+                $order->markPaid($method, $request->user());
+            }
+        });
 
         return redirect()
             ->route('waiter.bills.index', ['filter' => 'paid'])
-            ->with('status', "Payment collected for {$order->reference}.");
+            ->with('status', 'Payment collected for table '.$table.' · Rs '.number_format($unpaid->sum('total')).'.');
     }
 }
