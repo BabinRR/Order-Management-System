@@ -43,7 +43,7 @@ class DashboardController extends Controller
                 ->get()
         )->take(6);
 
-        return view('waiter.dashboard', compact(
+        return view('waiter-dashboard', compact(
             'pending',
             'preparing',
             'servedUnpaid',

@@ -1,8 +1,4 @@
-@extends('layouts.customer')
-
-@section('title', 'Your Bill')
-
-@section('content')
+<x-customer-layout title="Your Bill">
 <div class="mx-auto max-w-2xl space-y-5">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -95,4 +91,4 @@
         @endif
     @endif
 </div>
-@endsection
+</x-customer-layout>

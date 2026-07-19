@@ -1,10 +1,4 @@
-@extends('layouts.admin')
-
-@section('title', 'Profile Settings')
-@section('eyebrow', 'Account')
-@section('heading', 'Profile Settings')
-
-@section('content')
+<x-waiter-layout title="Profile Settings" eyebrow="Account" heading="Profile Settings">
 <div class="mx-auto max-w-3xl space-y-6">
     {{-- Profile summary --}}
     <section class="overflow-hidden rounded-2xl border border-[#d9cbb8] bg-white shadow-[0_1px_2px_rgba(26,31,28,0.04)]">
@@ -21,7 +15,7 @@
                     <h2 class="font-display text-2xl font-extrabold tracking-tight">{{ $user->name }}</h2>
                     <p class="mt-1 text-sm text-white/65">{{ $user->email }}</p>
                     <p class="mt-2 inline-flex rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/80">
-                        {{ $user->title ?: 'Admin' }}
+                        {{ $user->title ?: 'Waiter' }}
                     </p>
                 </div>
             </div>
@@ -37,7 +31,7 @@
 
         <form
             method="POST"
-            action="{{ route('admin.profile.update') }}"
+            action="{{ route('waiter.profile.update') }}"
             enctype="multipart/form-data"
             class="space-y-4"
             x-data="{ preview: @js($user->avatar_url) }"
@@ -157,7 +151,7 @@
             <p class="mt-0.5 text-sm text-ink-soft/60">Use a strong password you don’t reuse elsewhere.</p>
         </div>
 
-        <form method="POST" action="{{ route('admin.profile.password') }}" class="space-y-4">
+        <form method="POST" action="{{ route('waiter.profile.password') }}" class="space-y-4">
             @csrf
             @method('PUT')
 
@@ -232,4 +226,4 @@
         </div>
     </section>
 </div>
-@endsection
+</x-waiter-layout>

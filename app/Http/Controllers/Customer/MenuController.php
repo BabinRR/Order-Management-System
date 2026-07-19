@@ -22,7 +22,7 @@ class MenuController extends Controller
             ->get()
             ->groupBy('category');
 
-        return view('customer.menu', [
+        return view('customer-menu', [
             'groupedItems' => $items,
             'categories' => ['Starters', 'Mains', 'Desserts', 'Drinks', 'Sides'],
             'activeCategory' => $category,

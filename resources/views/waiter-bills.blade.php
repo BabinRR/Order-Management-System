@@ -1,10 +1,4 @@
-@extends('layouts.waiter')
-
-@section('title', 'Bills & Payments')
-@section('eyebrow', 'Payments')
-@section('heading', 'Bills by Table')
-
-@section('content')
+<x-waiter-layout title="Bills &amp; Payments" eyebrow="Payments" heading="Bills by Table">
 <div class="space-y-5">
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div class="flex flex-wrap gap-2">
@@ -75,4 +69,4 @@
         @endforelse
     </div>
 </div>
-@endsection
+</x-waiter-layout>

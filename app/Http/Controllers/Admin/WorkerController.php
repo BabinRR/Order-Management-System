@@ -27,7 +27,7 @@ class WorkerController extends Controller
             ->latest()
             ->get();
 
-        return view('admin.workers', [
+        return view('admin-workers', [
             'workers' => $workers,
             'search' => $search,
             'roles' => ['Head Chef', 'Sous Chef', 'Waiter', 'Waitress', 'Bartender', 'Host', 'Manager', 'Cashier'],

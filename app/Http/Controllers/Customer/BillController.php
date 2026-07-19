@@ -24,7 +24,7 @@ class BillController extends Controller
         $unpaid = $orders->where('payment_status', Order::PAYMENT_UNPAID);
         $paid = $orders->where('payment_status', Order::PAYMENT_PAID);
 
-        return view('customer.bill', [
+        return view('customer-bill', [
             'table' => $table,
             'customerName' => session('customer_name'),
             'orders' => $orders,

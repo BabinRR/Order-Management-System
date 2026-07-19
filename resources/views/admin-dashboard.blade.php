@@ -1,10 +1,4 @@
-@extends('layouts.admin')
-
-@section('title', 'Dashboard')
-@section('eyebrow', 'Overview')
-@section('heading', 'Dashboard')
-
-@section('content')
+<x-admin-layout title="Dashboard" eyebrow="Overview" heading="Dashboard">
 @php
     $maxRevenue = max(1, ...array_column($weeklyRevenue, 'amount'));
     $cards = [
@@ -187,4 +181,4 @@
         </div>
     </section>
 </div>
-@endsection
+</x-admin-layout>

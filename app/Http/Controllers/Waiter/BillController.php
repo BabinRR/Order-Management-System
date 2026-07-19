@@ -57,7 +57,7 @@ class BillController extends Controller
             ->orderByRaw('CAST(table_number AS INTEGER)')
             ->pluck('table_number');
 
-        return view('waiter.bills', [
+        return view('waiter-bills', [
             'tables' => $tables,
             'filter' => $filter,
             'activeTable' => $table,
@@ -83,7 +83,7 @@ class BillController extends Controller
 
         $unpaid = $orders->where('payment_status', Order::PAYMENT_UNPAID);
 
-        return view('waiter.bill-show', [
+        return view('waiter-bill-show', [
             'table' => $table,
             'orders' => $orders,
             'unpaidOrders' => $unpaid,

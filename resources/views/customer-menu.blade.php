@@ -1,8 +1,4 @@
-@extends('layouts.customer')
-
-@section('title', 'Menu')
-
-@section('content')
+<x-customer-layout title="Menu">
 @php
     $allCategories = array_keys($groupedItems->toArray());
     $categoryData = [];
@@ -214,4 +210,4 @@
         No dishes available right now.
     </p>
 @endif
-@endsection
+</x-customer-layout>

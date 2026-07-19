@@ -13,7 +13,7 @@ class CartController extends Controller
 {
     public function index(): View
     {
-        return view('customer.cart', [
+        return view('customer-cart', [
             'lines' => Cart::detailed(),
             'total' => Cart::total(),
             'table' => session('customer_table'),

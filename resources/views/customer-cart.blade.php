@@ -1,8 +1,4 @@
-@extends('layouts.customer')
-
-@section('title', 'Your Cart')
-
-@section('content')
+<x-customer-layout title="Your Cart">
 <div class="mx-auto max-w-2xl space-y-5">
     <div>
         <p class="text-[11px] font-semibold uppercase tracking-[0.15em] text-ink-soft/45">Table {{ $table }}</p>
@@ -55,4 +51,4 @@
         </div>
     @endif
 </div>
-@endsection
+</x-customer-layout>

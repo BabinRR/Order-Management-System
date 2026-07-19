@@ -12,7 +12,7 @@ class TableController extends Controller
 {
     public function home(): View
     {
-        return view('customer.home', [
+        return view('customer-home', [
             'table' => session('customer_table'),
             'customerName' => session('customer_name'),
         ]);

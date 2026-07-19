@@ -1,10 +1,4 @@
-@extends('layouts.admin')
-
-@section('title', 'Food Menu')
-@section('eyebrow', 'Catalog')
-@section('heading', 'Food Menu')
-
-@section('content')
+<x-admin-layout title="Food Menu" eyebrow="Catalog" heading="Food Menu">
 @php
     $formErrors = $errors->any();
 @endphp
@@ -241,4 +235,4 @@
         </div>
     </div>
 </div>
-@endsection
+</x-admin-layout>

@@ -33,7 +33,7 @@ class MenuController extends Controller
             ->latest()
             ->get();
 
-        return view('admin.menu', [
+        return view('admin-menu', [
             'items' => $items,
             'search' => $search,
             'activeCategory' => $category,

@@ -44,7 +44,7 @@ class OrderController extends Controller
             ->orderByRaw('CAST(table_number AS INTEGER)')
             ->pluck('table_number');
 
-        return view('waiter.orders', [
+        return view('waiter-orders', [
             'tables' => $tables,
             'filter' => $filter,
             'activeTable' => $table,

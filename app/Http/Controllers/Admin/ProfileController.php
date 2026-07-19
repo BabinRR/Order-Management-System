@@ -18,7 +18,7 @@ class ProfileController extends Controller
 
     public function edit(): View
     {
-        return view('admin.profile', [
+        return view('admin-profile', [
             'user' => Auth::user(),
         ]);
     }

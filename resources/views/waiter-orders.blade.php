@@ -1,10 +1,4 @@
-@extends('layouts.waiter')
-
-@section('title', 'Orders')
-@section('eyebrow', 'Service')
-@section('heading', 'Orders by Table')
-
-@section('content')
+<x-waiter-layout title="Orders" eyebrow="Service" heading="Orders by Table">
 @php
     $filters = [
         'active' => 'Active',
@@ -149,4 +143,4 @@
         </p>
     @endforelse
 </div>
-@endsection
+</x-waiter-layout>

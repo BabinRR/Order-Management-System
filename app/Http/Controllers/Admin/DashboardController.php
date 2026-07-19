@@ -67,7 +67,7 @@ class DashboardController extends Controller
 
         $recentOrders = Order::latest()->limit(6)->get();
 
-        return view('admin.dashboard', compact('stats', 'weeklyRevenue', 'topItems', 'recentOrders'));
+        return view('admin-dashboard', compact('stats', 'weeklyRevenue', 'topItems', 'recentOrders'));
     }
 
     private function percentageChange(int|float $current, int|float $previous): ?float

@@ -1,8 +1,4 @@
-@extends('layouts.customer')
-
-@section('title', 'Start Ordering')
-
-@section('content')
+<x-customer-layout title="Start Ordering">
 <div class="mx-auto max-w-lg">
     <div class="mb-8 text-center">
         <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-soft/45">Welcome</p>
@@ -64,4 +60,4 @@
         @endif
     </div>
 </div>
-@endsection
+</x-customer-layout>

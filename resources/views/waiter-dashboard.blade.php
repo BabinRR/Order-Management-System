@@ -1,10 +1,4 @@
-@extends('layouts.waiter')
-
-@section('title', 'Waiter Dashboard')
-@section('eyebrow', 'Waiter')
-@section('heading', 'Dashboard')
-
-@section('content')
+<x-waiter-layout title="Waiter Dashboard" eyebrow="Waiter" heading="Dashboard">
 <div class="space-y-6">
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-2xl border border-[#d9cbb8] bg-white p-5 shadow-[0_1px_2px_rgba(26,31,28,0.04)]">
@@ -85,4 +79,4 @@
         </section>
     </div>
 </div>
-@endsection
+</x-waiter-layout>
