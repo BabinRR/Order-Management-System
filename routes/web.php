@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\WorkerController;
+use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Customer\BillController as CustomerBillController;
 use App\Http\Controllers\Customer\CartController;
@@ -19,6 +20,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     if (Auth::check()) {
+        if (! Auth::user()->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
         return Auth::user()->isWaiter()
             ? redirect()->route('waiter.dashboard')
             : redirect()->route('admin.dashboard');
@@ -35,6 +40,16 @@ Route::middleware('guest')->group(function (): void {
 Route::post('/logout', [LoginController::class, 'destroy'])
     ->middleware('auth')
     ->name('logout');
+
+Route::middleware('auth')->group(function (): void {
+    Route::get('/email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+    Route::post('/email/verification-notification', [EmailVerificationController::class, 'send'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+});
 
 Route::prefix('order')->name('customer.')->group(function (): void {
     Route::get('/', [TableController::class, 'home'])->name('home');
@@ -56,7 +71,7 @@ Route::prefix('order')->name('customer.')->group(function (): void {
     });
 });
 
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function (): void {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:admin'])->group(function (): void {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('workers', WorkerController::class)->only(['index', 'store', 'update', 'destroy']);
@@ -67,7 +82,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::put('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.password');
 });
 
-Route::prefix('waiter')->name('waiter.')->middleware(['auth', 'role:waiter'])->group(function (): void {
+Route::prefix('waiter')->name('waiter.')->middleware(['auth', 'verified', 'role:waiter'])->group(function (): void {
     Route::get('/', [WaiterDashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/orders', [WaiterOrderController::class, 'index'])->name('orders.index');

@@ -10,7 +10,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title }} — {{ config('app.name', 'KitchenDesk') }}</title>
+    <title>{{ $title }} — {{ config('app.name', 'Order Easy') }}</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=manrope:400,500,600,700,800|syne:600,700,800" rel="stylesheet" />
@@ -26,7 +26,7 @@
         showToast(message) { this.toast = message; clearTimeout(this._t); this._t = setTimeout(() => this.toast = null, 3000); }
     }"
     x-init="if (toast) showToast(toast)"
-    @toast.window="showToast($event.detail)"
+    x-on:toast.window="showToast($event.detail)"
 >
     <div class="flex min-h-screen">
         {{-- Mobile overlay --}}
@@ -34,7 +34,7 @@
             x-show="sidebarOpen"
             x-cloak
             x-transition.opacity
-            @click="sidebarOpen = false"
+            x-on:click="sidebarOpen = false"
             class="fixed inset-0 z-40 bg-ink/50 backdrop-blur-sm lg:hidden"
         ></div>
 
@@ -51,7 +51,7 @@
                     K
                 </div>
                 <div>
-                    <p class="font-display text-lg font-extrabold leading-none tracking-tight">KitchenDesk</p>
+                    <p class="font-display text-lg font-extrabold leading-none tracking-tight">{{ config('app.name', 'Order Easy') }}</p>
                     <p class="mt-1 text-[11px] font-medium uppercase tracking-[0.18em] text-white/40">Restaurant Admin</p>
                 </div>
             </div>
@@ -102,6 +102,7 @@
                 @endforeach
             </nav>
 
+            @auth
             <a href="{{ route('admin.profile.edit') }}" class="m-4 block rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 transition hover:bg-white/8">
                 <div class="flex items-center gap-3">
                     @if (auth()->user()->avatar_url)
@@ -117,6 +118,7 @@
                     </div>
                 </div>
             </a>
+            @endauth
         </aside>
 
         {{-- Main --}}
@@ -125,7 +127,7 @@
                 <div class="flex items-center gap-3">
                     <button
                         type="button"
-                        @click="sidebarOpen = true"
+                        x-on:click="sidebarOpen = true"
                         class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#d9cbb8] bg-white text-ink shadow-sm lg:hidden"
                         aria-label="Open menu"
                     >

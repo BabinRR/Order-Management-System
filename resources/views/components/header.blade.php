@@ -5,7 +5,7 @@
                 K
             </div>
             <div>
-                <p class="font-display text-lg font-extrabold leading-none tracking-tight">KitchenDesk</p>
+                <p class="font-display text-lg font-extrabold leading-none tracking-tight">{{ config('app.name', 'Order Easy') }}</p>
                 <p class="mt-0.5 text-[11px] font-medium uppercase tracking-[0.16em] text-ink-soft/45">Guest Order</p>
             </div>
         </a>

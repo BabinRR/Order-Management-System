@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use Database\Factories\WorkerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Worker extends Model
 {
-    /** @use HasFactory<\Database\Factories\WorkerFactory> */
+    /** @use HasFactory<WorkerFactory> */
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'name',
         'role',
         'email',
@@ -19,6 +22,19 @@ class Worker extends Model
         'shift',
         'status',
     ];
+
+    public function isLoginRole(): bool
+    {
+        return in_array($this->role, ['Waiter', 'Waitress'], true);
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * @return HasMany<Order, $this>

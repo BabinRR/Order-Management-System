@@ -21,11 +21,15 @@ class LoginController extends Controller
         $request->authenticate();
         $request->session()->regenerate();
 
-        return redirect()->intended(
-            $request->user()->isWaiter()
-                ? route('waiter.dashboard')
-                : route('admin.dashboard')
-        );
+        if (! $request->user()->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
+        $home = $request->user()->isWaiter()
+            ? route('waiter.dashboard')
+            : route('admin.dashboard');
+
+        return redirect()->to($home);
     }
 
     public function destroy(Request $request): RedirectResponse

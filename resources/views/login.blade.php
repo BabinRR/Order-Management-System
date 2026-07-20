@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Sign in — {{ config('app.name', 'KitchenDesk') }}</title>
+    <title>Sign in — {{ config('app.name', 'Order Easy') }}</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=manrope:400,500,600,700,800|syne:600,700,800" rel="stylesheet" />
@@ -17,7 +17,7 @@
                 <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#a67c52] to-[#5d4037] font-display text-2xl font-extrabold text-white shadow-lg">
                     K
                 </div>
-                <h1 class="font-display text-3xl font-extrabold tracking-tight text-ink">KitchenDesk</h1>
+                <h1 class="font-display text-3xl font-extrabold tracking-tight text-ink">{{ config('app.name', 'Order Easy') }}</h1>
                 <p class="mt-2 text-sm text-ink-soft/65">Sign in to manage your restaurant</p>
             </div>
 
@@ -31,7 +31,7 @@
                             id="email"
                             type="email"
                             name="email"
-                            value="{{ old('email', 'admin@kitchen.local') }}"
+                            value="{{ old('email', 'davetor321@gmail.com') }}"
                             required
                             autofocus
                             autocomplete="username"
@@ -79,8 +79,7 @@
                 </form>
 
                 <p class="mt-5 space-y-2 rounded-xl bg-[#f7f0e8] px-3 py-2.5 text-center text-xs text-ink-soft/60">
-                    <span class="block">Admin: <span class="font-semibold text-ink">admin@kitchen.local</span> / <span class="font-semibold text-ink">password</span></span>
-                    <span class="block">Waiter: <span class="font-semibold text-ink">waiter@kitchen.local</span> / <span class="font-semibold text-ink">password</span></span>
+                    <span class="block">Staff sign-in for {{ config('app.name', 'Order Easy') }}</span>
                     <a href="{{ route('customer.home') }}" class="mt-1 inline-block font-semibold text-[#8b5e3c] hover:underline">Customer ordering →</a>
                 </p>
             </div>

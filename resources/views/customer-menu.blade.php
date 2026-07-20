@@ -71,7 +71,7 @@
 
                     {{-- Spine --}}
                     <div class="menu-book-spine hidden w-6 shrink-0 items-center justify-center sm:flex">
-                        <span class="text-[9px] font-bold uppercase tracking-[0.3em] text-white/30 [writing-mode:vertical-lr]">KitchenDesk</span>
+                        <span class="text-[9px] font-bold uppercase tracking-[0.3em] text-white/30 [writing-mode:vertical-lr]">{{ config('app.name', 'Order Easy') }}</span>
                     </div>
 
                     {{-- Left panel: Category tabs --}}

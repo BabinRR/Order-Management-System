@@ -17,15 +17,20 @@
             phone: @js(old('phone', '')),
             shift: @js(old('shift', $shifts[0])),
             status: @js(old('status', $statuses[0])),
+            password: '',
+            password_confirmation: '',
+        },
+        get needsLogin() {
+            return ['Waiter', 'Waitress'].includes(this.form.role);
         },
         openCreate() {
             this.editingId = null;
-            this.form = { name: '', role: @js($roles[0]), email: '', phone: '', shift: @js($shifts[0]), status: @js($statuses[0]) };
+            this.form = { name: '', role: @js($roles[0]), email: '', phone: '', shift: @js($shifts[0]), status: @js($statuses[0]), password: '', password_confirmation: '' };
             this.modalOpen = true;
         },
         openEdit(worker) {
             this.editingId = worker.id;
-            this.form = { name: worker.name, role: worker.role, email: worker.email, phone: worker.phone ?? '', shift: worker.shift, status: worker.status };
+            this.form = { name: worker.name, role: worker.role, email: worker.email, phone: worker.phone ?? '', shift: worker.shift, status: worker.status, password: '', password_confirmation: '' };
             this.modalOpen = true;
         },
         matches(row) {
@@ -212,6 +217,22 @@
                         </select>
                     </div>
                 </div>
+
+                <template x-if="needsLogin">
+                    <div class="space-y-4 rounded-xl border border-[#d9cbb8] bg-[#f7f0e8]/70 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-[#8b5e3c]">Waiter login account</p>
+                        <p class="text-xs text-ink-soft/60">Creates a login for this staff member and sends an email verification link.</p>
+                        <div>
+                            <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Password</label>
+                            <input x-model="form.password" name="password" type="password" autocomplete="new-password" @class(['w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#8b5e3c]/25', 'border-[#a0522d]' => $errors->has('password'), 'border-[#d9cbb8] focus:border-[#8b5e3c]' => ! $errors->has('password')])>
+                            @error('password') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Confirm password</label>
+                            <input x-model="form.password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" class="w-full rounded-xl border border-[#d9cbb8] px-3 py-2.5 text-sm outline-none focus:border-[#8b5e3c] focus:ring-2 focus:ring-[#8b5e3c]/25">
+                        </div>
+                    </div>
+                </template>
 
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" @click="modalOpen = false" class="rounded-xl border border-[#d9cbb8] px-4 py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-[#f0e6da]">Cancel</button>

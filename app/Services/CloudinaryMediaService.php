@@ -54,7 +54,7 @@ class CloudinaryMediaService
     {
         try {
             $result = $this->cloudinary()->uploadApi()->upload($file->getRealPath(), [
-                'folder' => 'kitchendesk/'.$folder,
+                'folder' => 'order-easy/'.$folder,
                 'resource_type' => 'image',
                 'overwrite' => false,
             ]);
@@ -73,7 +73,7 @@ class CloudinaryMediaService
      */
     private function uploadToLocal(UploadedFile $file, string $folder): array
     {
-        $path = $file->store('kitchendesk/'.$folder, 'public');
+        $path = $file->store('order-easy/'.$folder, 'public');
 
         if ($path === false) {
             throw new RuntimeException('Image upload failed. Could not save the file locally.');
