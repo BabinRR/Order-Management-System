@@ -1,4 +1,4 @@
-<x-waiter-layout title="Orders" eyebrow="Service" heading="Orders by Table">
+<x-waiter-layout title="Orders" heading="Order Status">
 @php
     $filters = [
         'active' => 'Active',

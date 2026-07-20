@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\Worker;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -14,60 +14,170 @@ class DashboardController extends Controller
     public function index(): View
     {
         $today = Carbon::today();
-        $weekStart = Carbon::today()->subDays(6);
-        $prevWeekStart = Carbon::today()->subDays(13);
-
-        $revenueToday = (int) Order::whereDate('created_at', $today)->sum('total');
-        $revenueYesterday = (int) Order::whereDate('created_at', $today->copy()->subDay())->sum('total');
-        $revenueWeek = (int) Order::where('created_at', '>=', $weekStart)->sum('total');
-        $revenuePrevWeek = (int) Order::whereBetween('created_at', [$prevWeekStart, $weekStart])->sum('total');
 
         $ordersToday = Order::whereDate('created_at', $today)->count();
-        $ordersWeek = Order::where('created_at', '>=', $weekStart)->count();
-        $avgOrder = $ordersWeek > 0 ? $revenueWeek / $ordersWeek : 0;
+        $ordersYesterday = Order::whereDate('created_at', $today->copy()->subDay())->count();
+        $revenueToday = (int) Order::whereDate('created_at', $today)->sum('total');
+        $revenueYesterday = (int) Order::whereDate('created_at', $today->copy()->subDay())->sum('total');
+
+        $activeOrders = Order::query()
+            ->with('menuItem')
+            ->where(function ($query): void {
+                $query->whereIn('service_status', [Order::SERVICE_PENDING, Order::SERVICE_PREPARING])
+                    ->orWhere(function ($query): void {
+                        $query->where('service_status', Order::SERVICE_SERVED)
+                            ->where('payment_status', Order::PAYMENT_UNPAID);
+                    });
+            })
+            ->latest()
+            ->get();
+
+        $floorTables = $this->buildFloor($activeOrders);
+        $occupiedCount = $floorTables->where('state', '!=', 'empty')->count();
+        $tableTotal = $floorTables->count();
+
+        $avgTicketMinutes = $this->averageTicketMinutes();
 
         $stats = [
-            'revenue_today' => $revenueToday,
-            'revenue_today_delta' => $this->percentageChange($revenueToday, $revenueYesterday),
-            'revenue_week' => $revenueWeek,
-            'revenue_week_delta' => $this->percentageChange($revenueWeek, $revenuePrevWeek),
             'orders_today' => $ordersToday,
-            'orders_week' => $ordersWeek,
-            'avg_order' => $avgOrder,
+            'orders_delta' => $this->percentageChange($ordersToday, $ordersYesterday),
+            'revenue_today' => $revenueToday,
+            'revenue_delta' => $this->percentageChange($revenueToday, $revenueYesterday),
+            'active_tables' => $occupiedCount,
+            'table_total' => $tableTotal,
+            'avg_ticket_minutes' => $avgTicketMinutes,
             'active_workers' => Worker::where('status', 'Active')->count(),
-            'total_workers' => Worker::count(),
-            'menu_items' => MenuItem::count(),
-            'available_items' => MenuItem::where('status', 'Available')->count(),
         ];
 
-        $weeklyRevenue = collect(range(6, 0))->map(function (int $daysAgo): array {
-            $date = Carbon::today()->subDays($daysAgo);
+        $groupedActive = $this->groupActiveOrders($activeOrders);
 
-            return [
-                'day' => $date->format('D'),
-                'amount' => (int) Order::whereDate('created_at', $date)->sum('total'),
-            ];
-        })->all();
-
-        $topItems = Order::query()
-            ->selectRaw('menu_item_id, count(*) as orders, sum(total) as revenue')
-            ->whereNotNull('menu_item_id')
-            ->where('created_at', '>=', $weekStart)
-            ->groupBy('menu_item_id')
-            ->orderByDesc('revenue')
-            ->with('menuItem:id,name')
-            ->limit(5)
+        $liveFeed = Order::query()
+            ->with('menuItem')
+            ->latest()
+            ->limit(12)
             ->get()
-            ->map(fn (Order $order): array => [
-                'name' => $order->menuItem?->name ?? 'Unknown',
-                'orders' => (int) $order->orders,
-                'revenue' => (int) $order->revenue,
-            ])
-            ->all();
+            ->map(function (Order $order): object {
+                $message = match (true) {
+                    $order->payment_status === Order::PAYMENT_PAID => "Order {$order->reference} was paid",
+                    $order->service_status === Order::SERVICE_SERVED => "Order {$order->reference} is now ready",
+                    $order->service_status === Order::SERVICE_PREPARING => "Order {$order->reference} is in progress",
+                    default => "New order {$order->reference} from table {$order->table_number}",
+                };
 
-        $recentOrders = Order::latest()->limit(6)->get();
+                return (object) [
+                    'message' => $message,
+                    'time' => $order->updated_at?->diffForHumans() ?? '',
+                ];
+            });
 
-        return view('admin-dashboard', compact('stats', 'weeklyRevenue', 'topItems', 'recentOrders'));
+        return view('admin-dashboard', [
+            'stats' => $stats,
+            'activeOrders' => $groupedActive,
+            'floorTables' => $floorTables,
+            'liveFeed' => $liveFeed,
+        ]);
+    }
+
+    /**
+     * @param  Collection<int, Order>  $orders
+     * @return Collection<int, object>
+     */
+    private function groupActiveOrders(Collection $orders): Collection
+    {
+        return $orders
+            ->groupBy(fn (Order $order) => $order->reference ?: (string) $order->id)
+            ->map(function (Collection $items, string $reference) {
+                $statuses = $items->pluck('service_status');
+                $status = match (true) {
+                    $statuses->contains(Order::SERVICE_PENDING) => 'pending',
+                    $statuses->contains(Order::SERVICE_PREPARING) => 'preparing',
+                    default => 'ready',
+                };
+
+                $oldest = $items->sortBy('created_at')->first();
+                $elapsed = $oldest?->created_at?->diffInSeconds(now()) ?? 0;
+
+                return (object) [
+                    'reference' => $reference,
+                    'table_number' => $oldest?->table_number ?? '—',
+                    'items_count' => (int) $items->sum('items_count'),
+                    'total' => (int) $items->sum('total'),
+                    'status' => $status,
+                    'elapsed' => $this->formatElapsed($elapsed),
+                    'order_ids' => $items->pluck('id')->all(),
+                    'primary' => $oldest,
+                ];
+            })
+            ->sortByDesc(fn ($row) => $row->primary?->created_at)
+            ->values();
+    }
+
+    /**
+     * @param  Collection<int, Order>  $orders
+     * @return Collection<int, object>
+     */
+    private function buildFloor(Collection $orders): Collection
+    {
+        $byTable = $orders
+            ->filter(fn (Order $order) => filled($order->table_number))
+            ->groupBy(fn (Order $order) => (string) $order->table_number);
+
+        $maxTable = max(12, $byTable->keys()->filter(fn ($n) => is_numeric($n))->map(fn ($n) => (int) $n)->max() ?: 12);
+
+        return collect(range(1, $maxTable))->map(function (int $number) use ($byTable) {
+            $key = (string) $number;
+            $items = $byTable->get($key, collect());
+
+            if ($items->isEmpty()) {
+                return (object) [
+                    'table_number' => $key,
+                    'state' => 'empty',
+                    'guest_count' => 0,
+                    'needs_attention' => false,
+                ];
+            }
+
+            $pending = $items->where('service_status', Order::SERVICE_PENDING)->count();
+            $preparing = $items->where('service_status', Order::SERVICE_PREPARING)->count();
+            $needsAttention = $pending > 0 || $preparing > 0;
+
+            return (object) [
+                'table_number' => $key,
+                'state' => $needsAttention ? 'attention' : 'occupied',
+                'guest_count' => min(4, max(1, (int) ceil($items->sum('items_count') / 2))),
+                'needs_attention' => $needsAttention,
+            ];
+        });
+    }
+
+    private function averageTicketMinutes(): int
+    {
+        $served = Order::query()
+            ->whereNotNull('served_at')
+            ->whereDate('served_at', Carbon::today())
+            ->get(['created_at', 'served_at']);
+
+        if ($served->isEmpty()) {
+            $active = Order::query()
+                ->whereIn('service_status', [Order::SERVICE_PENDING, Order::SERVICE_PREPARING])
+                ->get(['created_at']);
+
+            if ($active->isEmpty()) {
+                return 0;
+            }
+
+            return (int) round($active->avg(fn (Order $order) => $order->created_at->diffInMinutes(now())));
+        }
+
+        return (int) round($served->avg(fn (Order $order) => $order->created_at->diffInMinutes($order->served_at)));
+    }
+
+    private function formatElapsed(int $seconds): string
+    {
+        $minutes = intdiv($seconds, 60);
+        $secs = $seconds % 60;
+
+        return sprintf('%d:%02d', $minutes, $secs);
     }
 
     private function percentageChange(int|float $current, int|float $previous): ?float

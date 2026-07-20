@@ -1,4 +1,4 @@
-<x-waiter-layout title="Table {{ $table }} Bill" eyebrow="Payment" heading="Table {{ $table }} Bill">
+<x-waiter-layout title="Table {{ $table }} Bill" heading="Table {{ $table }} Check">
 <div class="mx-auto max-w-2xl space-y-5">
     <a href="{{ route('waiter.bills.index') }}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-[#8b5e3c] hover:underline">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>

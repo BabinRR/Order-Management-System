@@ -1,4 +1,4 @@
-<x-admin-layout title="Workers" eyebrow="Team" heading="Workers">
+<x-admin-layout title="Workers">
 @php
     $formErrors = $errors->any();
 @endphp
@@ -41,23 +41,23 @@
     class="space-y-5"
 >
     {{-- Toolbar --}}
-    <div class="flex flex-col gap-3 rounded-2xl border border-[#d9cbb8] bg-white p-4 shadow-[0_1px_2px_rgba(26,31,28,0.04)] sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex flex-col gap-3 admin-card rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-3">
             <div class="relative max-w-md flex-1 sm:min-w-[280px]">
-                <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15z"/></svg>
+                <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15z"/></svg>
                 <input
                     type="search"
                     x-model="search"
                     placeholder="Search by name, role, or email…"
-                    class="w-full rounded-xl border border-[#d9cbb8] bg-[#f7f0e8] py-2.5 pl-10 pr-4 text-sm outline-none ring-[#8b5e3c]/25 transition placeholder:text-ink-soft/40 focus:border-[#8b5e3c] focus:bg-white focus:ring-2"
+                    class="w-full rounded-xl border border-white/10 bg-[#0f0f0f] py-2.5 pl-10 pr-4 text-sm outline-none ring-rose-500/25 transition placeholder:text-white/30 focus:border-rose-500 focus:bg-[#141414] focus:ring-2 text-white"
                 >
             </div>
-            <span class="hidden rounded-lg bg-[#f0e6da] px-2.5 py-1 text-xs font-semibold text-ink-soft/60 sm:inline-flex">{{ $workers->count() }} total</span>
+            <span class="hidden rounded-lg bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/50 sm:inline-flex">{{ $workers->count() }} total</span>
         </div>
         <button
             type="button"
             @click="openCreate()"
-            class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#8b5e3c] to-[#5d4037] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-rose-600 to-rose-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
         >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
             Add worker
@@ -65,10 +65,10 @@
     </div>
 
     {{-- Table --}}
-    <div class="overflow-hidden rounded-2xl border border-[#d9cbb8] bg-white shadow-[0_1px_2px_rgba(26,31,28,0.04)]">
+    <div class="overflow-hidden admin-card rounded-2xl shadow-[0_1px_2px_rgba(26,31,28,0.04)]">
         <div class="overflow-x-auto">
             <table class="w-full min-w-[760px] text-left text-sm">
-                <thead class="bg-[#f7f0e8] text-xs uppercase tracking-wider text-ink-soft/50">
+                <thead class="bg-[#0f0f0f] text-xs uppercase tracking-wider text-white/40">
                     <tr>
                         <th class="px-5 py-3.5 font-semibold sm:px-6">Worker</th>
                         <th class="px-5 py-3.5 font-semibold sm:px-6">Role</th>
@@ -77,33 +77,33 @@
                         <th class="px-5 py-3.5 text-right font-semibold sm:px-6">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-[#f0e6da]">
+                <tbody class="divide-y divide-white/8">
                     @forelse ($workers as $worker)
                         <tr
-                            class="transition hover:bg-[#f7f0e8]/70"
+                            class="transition hover:bg-[#0f0f0f]/70"
                             x-show="matches(@js($worker->name.' '.$worker->role.' '.$worker->email.' '.$worker->shift.' '.$worker->status))"
                         >
                             <td class="px-5 py-3.5 sm:px-6">
                                 <div class="flex items-center gap-3">
-                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#ede0d0] to-[#d0e2d7] text-xs font-bold text-[#5d4037]">
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-white/10 to-white/5 text-xs font-bold text-emerald-400">
                                         {{ $worker->initials }}
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="font-semibold text-ink">{{ $worker->name }}</p>
-                                        <p class="truncate text-xs text-ink-soft/55">{{ $worker->email }}</p>
+                                        <p class="font-semibold text-white">{{ $worker->name }}</p>
+                                        <p class="truncate text-xs text-white/45">{{ $worker->email }}</p>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-5 py-3.5 text-ink-soft sm:px-6">{{ $worker->role }}</td>
+                            <td class="px-5 py-3.5 text-white/60 sm:px-6">{{ $worker->role }}</td>
                             <td class="px-5 py-3.5 sm:px-6">
-                                <span class="inline-flex rounded-md bg-[#f0e6da] px-2 py-0.5 text-xs font-medium text-ink-soft/70">{{ $worker->shift }}</span>
+                                <span class="inline-flex rounded-md bg-white/10 px-2 py-0.5 text-xs font-medium text-white/60">{{ $worker->shift }}</span>
                             </td>
                             <td class="px-5 py-3.5 sm:px-6">
                                 @php
                                     $statusClass = match ($worker->status) {
-                                        'Active' => 'bg-[#ede0d0] text-[#5d4037]',
-                                        'On Leave' => 'bg-[#f5e6d8] text-[#a0522d]',
-                                        default => 'bg-[#f0e6da] text-ink-soft',
+                                        'Active' => 'bg-emerald-500/15 text-emerald-400',
+                                        'On Leave' => 'bg-rose-500/15 text-rose-400',
+                                        default => 'bg-white/10 text-white/60',
                                     };
                                 @endphp
                                 <span class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold {{ $statusClass }}">
@@ -124,14 +124,14 @@
                                             'shift' => $worker->shift,
                                             'status' => $worker->status,
                                         ]))"
-                                        class="rounded-lg border border-[#d9cbb8] bg-white px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-[#8b5e3c] hover:text-[#8b5e3c]"
+                                        class="rounded-lg admin-card px-3 py-1.5 text-xs font-semibold text-white transition hover:border-rose-500 hover:text-rose-400"
                                     >
                                         Edit
                                     </button>
                                     <button
                                         type="button"
                                         @click="deleteTarget = @js(['id' => $worker->id, 'name' => $worker->name])"
-                                        class="rounded-lg bg-[#f5e6d8] px-3 py-1.5 text-xs font-semibold text-[#a0522d] transition hover:bg-[#edd5c4]"
+                                        class="rounded-lg bg-rose-500/15 px-3 py-1.5 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/25"
                                     >
                                         Delete
                                     </button>
@@ -140,7 +140,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-16 text-center text-sm text-ink-soft/55">No workers yet. Add your first team member.</td>
+                            <td colspan="5" class="px-6 py-16 text-center text-sm text-white/45">No workers yet. Add your first team member.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -153,16 +153,16 @@
         x-show="modalOpen"
         x-cloak
         x-transition.opacity
-        class="fixed inset-0 z-50 flex items-end justify-center bg-ink/45 p-4 backdrop-blur-sm sm:items-center"
+        class="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
         @keydown.escape.window="modalOpen = false"
     >
-        <div @click.outside="modalOpen = false" class="modal-enter w-full max-w-lg rounded-2xl border border-[#d9cbb8] bg-white p-5 shadow-2xl sm:p-6">
+        <div @click.outside="modalOpen = false" class="modal-enter w-full max-w-lg admin-card rounded-2xl p-5 shadow-2xl text-white sm:p-6">
             <div class="mb-5 flex items-start justify-between">
                 <div>
-                    <h2 class="font-display text-xl font-extrabold text-ink" x-text="editingId ? 'Edit worker' : 'Add worker'"></h2>
-                    <p class="mt-0.5 text-sm text-ink-soft/60">Manage staff details and shift assignment.</p>
+                    <h2 class="font-control text-xl font-extrabold text-white" x-text="editingId ? 'Edit worker' : 'Add worker'"></h2>
+                    <p class="mt-0.5 text-sm text-white/50">Manage staff details and shift assignment.</p>
                 </div>
-                <button type="button" @click="modalOpen = false" class="rounded-lg p-1.5 text-ink-soft/50 transition hover:bg-[#f0e6da] hover:text-ink">
+                <button type="button" @click="modalOpen = false" class="rounded-lg p-1.5 text-white/40 transition hover:bg-white/10 hover:text-white">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -173,23 +173,23 @@
                 <input type="hidden" name="worker_id" :value="editingId">
 
                 <div>
-                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Full name</label>
-                    <input x-model="form.name" name="name" type="text" @class(['w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#8b5e3c]/25', 'border-[#a0522d]' => $errors->has('name'), 'border-[#d9cbb8] focus:border-[#8b5e3c]' => ! $errors->has('name')])>
-                    @error('name') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
+                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">Full name</label>
+                    <input x-model="form.name" name="name" type="text" @class(['w-full rounded-xl border bg-[#0f0f0f] px-3 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-rose-500/25', 'border-rose-500' => $errors->has('name'), 'border-white/15 focus:border-rose-500' => ! $errors->has('name')])>
+                    @error('name') <p class="mt-1 text-xs font-medium text-rose-400">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
-                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Role</label>
-                        <select x-model="form.role" name="role" class="w-full rounded-xl border border-[#d9cbb8] px-3 py-2.5 text-sm outline-none focus:border-[#8b5e3c] focus:ring-2 focus:ring-[#8b5e3c]/25">
+                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">Role</label>
+                        <select x-model="form.role" name="role" class="w-full rounded-xl border border-white/15 bg-[#0f0f0f] px-3 py-2.5 text-sm text-white outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/25">
                             @foreach ($roles as $role)
                                 <option value="{{ $role }}">{{ $role }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Shift</label>
-                        <select x-model="form.shift" name="shift" class="w-full rounded-xl border border-[#d9cbb8] px-3 py-2.5 text-sm outline-none focus:border-[#8b5e3c] focus:ring-2 focus:ring-[#8b5e3c]/25">
+                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">Shift</label>
+                        <select x-model="form.shift" name="shift" class="w-full rounded-xl border border-white/15 bg-[#0f0f0f] px-3 py-2.5 text-sm text-white outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/25">
                             @foreach ($shifts as $shift)
                                 <option value="{{ $shift }}">{{ $shift }}</option>
                             @endforeach
@@ -198,19 +198,19 @@
                 </div>
 
                 <div>
-                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Email</label>
-                    <input x-model="form.email" name="email" type="email" @class(['w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#8b5e3c]/25', 'border-[#a0522d]' => $errors->has('email'), 'border-[#d9cbb8] focus:border-[#8b5e3c]' => ! $errors->has('email')])>
-                    @error('email') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
+                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">Email</label>
+                    <input x-model="form.email" name="email" type="email" @class(['w-full rounded-xl border bg-[#0f0f0f] px-3 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-rose-500/25', 'border-rose-500' => $errors->has('email'), 'border-white/15 focus:border-rose-500' => ! $errors->has('email')])>
+                    @error('email') <p class="mt-1 text-xs font-medium text-rose-400">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
-                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Phone</label>
-                        <input x-model="form.phone" name="phone" type="text" class="w-full rounded-xl border border-[#d9cbb8] px-3 py-2.5 text-sm outline-none focus:border-[#8b5e3c] focus:ring-2 focus:ring-[#8b5e3c]/25">
+                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">Phone</label>
+                        <input x-model="form.phone" name="phone" type="text" class="w-full rounded-xl border border-white/15 bg-[#0f0f0f] px-3 py-2.5 text-sm text-white outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/25">
                     </div>
                     <div>
-                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Status</label>
-                        <select x-model="form.status" name="status" class="w-full rounded-xl border border-[#d9cbb8] px-3 py-2.5 text-sm outline-none focus:border-[#8b5e3c] focus:ring-2 focus:ring-[#8b5e3c]/25">
+                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">Status</label>
+                        <select x-model="form.status" name="status" class="w-full rounded-xl border border-white/15 bg-[#0f0f0f] px-3 py-2.5 text-sm text-white outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/25">
                             @foreach ($statuses as $status)
                                 <option value="{{ $status }}">{{ $status }}</option>
                             @endforeach
@@ -219,24 +219,24 @@
                 </div>
 
                 <template x-if="needsLogin">
-                    <div class="space-y-4 rounded-xl border border-[#d9cbb8] bg-[#f7f0e8]/70 p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-[#8b5e3c]">Waiter login account</p>
-                        <p class="text-xs text-ink-soft/60">Creates a login for this staff member and sends an email verification link.</p>
+                    <div class="space-y-4 rounded-xl border border-white/10 bg-[#0f0f0f]/70 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-rose-400">Waiter login account</p>
+                        <p class="text-xs text-white/50">Creates a login for this staff member and sends an email verification link.</p>
                         <div>
-                            <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Password</label>
-                            <input x-model="form.password" name="password" type="password" autocomplete="new-password" @class(['w-full rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#8b5e3c]/25', 'border-[#a0522d]' => $errors->has('password'), 'border-[#d9cbb8] focus:border-[#8b5e3c]' => ! $errors->has('password')])>
-                            @error('password') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
+                            <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">Password</label>
+                            <input x-model="form.password" name="password" type="password" autocomplete="new-password" @class(['w-full rounded-xl border bg-[#0f0f0f] px-3 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-rose-500/25', 'border-rose-500' => $errors->has('password'), 'border-white/15 focus:border-rose-500' => ! $errors->has('password')])>
+                            @error('password') <p class="mt-1 text-xs font-medium text-rose-400">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Confirm password</label>
-                            <input x-model="form.password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" class="w-full rounded-xl border border-[#d9cbb8] px-3 py-2.5 text-sm outline-none focus:border-[#8b5e3c] focus:ring-2 focus:ring-[#8b5e3c]/25">
+                            <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">Confirm password</label>
+                            <input x-model="form.password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" class="w-full rounded-xl border border-white/15 bg-[#0f0f0f] px-3 py-2.5 text-sm text-white outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/25">
                         </div>
                     </div>
                 </template>
 
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" @click="modalOpen = false" class="rounded-xl border border-[#d9cbb8] px-4 py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-[#f0e6da]">Cancel</button>
-                    <button type="submit" class="rounded-xl bg-gradient-to-br from-[#8b5e3c] to-[#5d4037] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95" x-text="editingId ? 'Save changes' : 'Add worker'"></button>
+                    <button type="button" @click="modalOpen = false" class="rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/60 transition hover:bg-white/10">Cancel</button>
+                    <button type="submit" class="rounded-xl bg-gradient-to-br from-rose-600 to-rose-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95" x-text="editingId ? 'Save changes' : 'Add worker'"></button>
                 </div>
             </form>
         </div>
@@ -247,21 +247,21 @@
         x-show="deleteTarget"
         x-cloak
         x-transition.opacity
-        class="fixed inset-0 z-50 flex items-end justify-center bg-ink/45 p-4 backdrop-blur-sm sm:items-center"
+        class="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
     >
-        <div @click.outside="deleteTarget = null" class="modal-enter w-full max-w-md rounded-2xl border border-[#d9cbb8] bg-white p-6 shadow-2xl">
-            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f5e6d8] text-[#a0522d]">
+        <div @click.outside="deleteTarget = null" class="modal-enter w-full max-w-md admin-card rounded-2xl p-6 shadow-2xl text-white">
+            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-400">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </div>
-            <h2 class="font-display text-xl font-extrabold text-ink">Delete worker?</h2>
-            <p class="mt-2 text-sm text-ink-soft/70">
-                Remove <span class="font-semibold text-ink" x-text="deleteTarget?.name"></span> from the staff list? This can’t be undone.
+            <h2 class="font-control text-xl font-extrabold text-white">Delete worker?</h2>
+            <p class="mt-2 text-sm text-white/60">
+                Remove <span class="font-semibold text-white" x-text="deleteTarget?.name"></span> from the staff list? This can’t be undone.
             </p>
             <form :action="baseUrl + '/' + deleteTarget?.id" method="POST" class="mt-5 flex justify-end gap-2">
                 @csrf
                 @method('DELETE')
-                <button type="button" @click="deleteTarget = null" class="rounded-xl border border-[#d9cbb8] px-4 py-2.5 text-sm font-semibold text-ink-soft transition hover:bg-[#f0e6da]">Cancel</button>
-                <button type="submit" class="rounded-xl bg-[#a0522d] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#804020]">Delete</button>
+                <button type="button" @click="deleteTarget = null" class="rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/60 transition hover:bg-white/10">Cancel</button>
+                <button type="submit" class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700">Delete</button>
             </form>
         </div>
     </div>

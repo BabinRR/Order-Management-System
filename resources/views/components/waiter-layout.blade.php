@@ -1,8 +1,23 @@
 @props([
     'title' => 'Waiter',
-    'eyebrow' => 'Waiter',
     'heading' => '',
 ])
+
+@php
+    $openOrderCount = \App\Models\Order::query()
+        ->whereIn('service_status', [
+            \App\Models\Order::SERVICE_PENDING,
+            \App\Models\Order::SERVICE_PREPARING,
+        ])
+        ->count();
+
+    $tabs = [
+        ['route' => 'waiter.dashboard', 'label' => 'My Tables', 'match' => 'waiter.dashboard', 'icon' => 'tables'],
+        ['route' => 'waiter.orders.index', 'label' => 'Orders', 'match' => 'waiter.orders.*', 'icon' => 'orders', 'badge' => $openOrderCount],
+        ['route' => 'waiter.bills.index', 'label' => 'Bills', 'match' => 'waiter.bills.*', 'icon' => 'bills'],
+        ['route' => 'waiter.profile.edit', 'label' => 'Profile', 'match' => 'waiter.profile.*', 'icon' => 'profile'],
+    ];
+@endphp
 
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -11,7 +26,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title }} — {{ config('app.name', 'Order Easy') }}</title>
-
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=manrope:400,500,600,700,800|syne:600,700,800" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -20,129 +34,98 @@
 <body
     class="admin-bg min-h-screen text-ink"
     x-data="{
-        sidebarOpen: false,
         toast: @js(session('status')),
-        showToast(message) { this.toast = message; clearTimeout(this._t); this._t = setTimeout(() => this.toast = null, 3000); }
+        now: '{{ now()->format('g:i A') }}',
+        showToast(message) { this.toast = message; clearTimeout(this._t); this._t = setTimeout(() => this.toast = null, 3200); }
     }"
-    x-init="if (toast) showToast(toast)"
+    x-init="
+        if (toast) showToast(toast);
+        setInterval(() => {
+            const d = new Date();
+            now = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        }, 30000);
+    "
     x-on:toast.window="showToast($event.detail)"
 >
-    <div class="flex min-h-screen">
-        <div
-            x-show="sidebarOpen"
-            x-cloak
-            x-transition.opacity
-            x-on:click="sidebarOpen = false"
-            class="fixed inset-0 z-40 bg-ink/50 backdrop-blur-sm lg:hidden"
-        ></div>
-
-        <div class="hidden w-[264px] shrink-0 lg:block" aria-hidden="true"></div>
-
-        <aside
-            class="sidebar-bg fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col text-white shadow-2xl transition-transform duration-300 lg:translate-x-0 lg:shadow-none"
-            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-        >
-            <div class="flex items-center gap-3 px-6 py-6">
-                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#a67c52] to-[#5d4037] font-display text-lg font-extrabold shadow-lg ring-1 ring-white/10">
-                    W
+    <div class="mx-auto min-h-screen max-w-7xl px-4 pb-10 pt-5 sm:px-6 lg:px-8">
+        {{-- Top header --}}
+        <header class="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#a67c52] to-[#5d4037] font-display text-lg font-extrabold text-white shadow-sm">
+                    {{ strtoupper(substr(config('app.name', 'OE'), 0, 1)) }}
                 </div>
                 <div>
-                    <p class="font-display text-lg font-extrabold leading-none tracking-tight">{{ config('app.name', 'Order Easy') }}</p>
-                    <p class="mt-1 text-[11px] font-medium uppercase tracking-[0.18em] text-white/40">Waiter</p>
+                    <p class="font-display text-xl font-extrabold tracking-tight text-ink">{{ config('app.name', 'Order Easy') }}</p>
+                    <p class="text-sm text-ink-soft/60">
+                        {{ auth()->user()->name }}
+                        <span class="text-ink-soft/35">·</span>
+                        {{ auth()->user()->title ?: 'Waiter' }}
+                    </p>
                 </div>
             </div>
 
-            <div class="mx-4 mb-2 border-t border-white/10"></div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 rounded-2xl border border-[#d9cbb8] bg-white px-3.5 py-2.5 text-sm font-semibold text-ink shadow-sm">
+                    <svg class="h-4 w-4 text-[#8b5e3c]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span x-text="now">{{ now()->format('g:i A') }}</span>
+                </div>
+                <a
+                    href="{{ route('waiter.orders.index', ['filter' => 'active']) }}"
+                    class="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-[#d9cbb8] bg-white text-ink shadow-sm transition hover:border-[#8b5e3c]"
+                    aria-label="Open orders"
+                >
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    @if ($openOrderCount > 0)
+                        <span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8b5e3c] px-1 text-[10px] font-bold text-white">{{ $openOrderCount > 9 ? '9+' : $openOrderCount }}</span>
+                    @endif
+                </a>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="rounded-2xl border border-[#d9cbb8] bg-white px-3.5 py-2.5 text-xs font-semibold text-ink-soft shadow-sm hover:border-[#8b5e3c]">Sign out</button>
+                </form>
+            </div>
+        </header>
 
-            <nav class="flex flex-1 flex-col gap-1 px-4 py-3">
-                <p class="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">Waiter</p>
-                @php
-                    $links = [
-                        ['route' => 'waiter.dashboard', 'label' => 'Dashboard', 'match' => 'waiter.dashboard', 'icon' => 'home'],
-                        ['route' => 'waiter.orders.index', 'label' => 'Orders', 'match' => 'waiter.orders.*', 'icon' => 'orders'],
-                        ['route' => 'waiter.bills.index', 'label' => 'Bills & Pay', 'match' => 'waiter.bills.*', 'icon' => 'bills'],
-                        ['route' => 'waiter.profile.edit', 'label' => 'My Profile', 'match' => 'waiter.profile.*', 'icon' => 'profile'],
-                    ];
-                @endphp
-
-                @foreach ($links as $link)
-                    @php $active = request()->routeIs($link['match']); @endphp
+        {{-- Pill tab nav --}}
+        <nav class="mb-7 flex justify-center">
+            <div class="inline-flex max-w-full flex-wrap items-center justify-center gap-1 rounded-[1.25rem] border border-[#d9cbb8]/80 bg-[#efe6da]/90 p-1.5 shadow-sm">
+                @foreach ($tabs as $tab)
+                    @php $active = request()->routeIs($tab['match']); @endphp
                     <a
-                        href="{{ route($link['route']) }}"
+                        href="{{ route($tab['route']) }}"
                         @class([
-                            'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition',
-                            'bg-white/12 text-white shadow-sm' => $active,
-                            'text-white/60 hover:bg-white/8 hover:text-white' => ! $active,
+                            'relative inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition',
+                            'bg-white text-[#8b5e3c] shadow-sm' => $active,
+                            'text-ink-soft/65 hover:text-ink' => ! $active,
                         ])
                     >
-                        @if ($active)
-                            <span class="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-[#d4a574]"></span>
+                        @if ($tab['icon'] === 'tables')
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10M4 18h7"/></svg>
+                        @elseif ($tab['icon'] === 'orders')
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        @elseif ($tab['icon'] === 'bills')
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+                        @else
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                         @endif
-                        <span @class([
-                            'flex h-8 w-8 items-center justify-center rounded-lg transition',
-                            'bg-[#8b5e3c] text-white' => $active,
-                            'bg-white/8 text-white/70 group-hover:bg-white/12' => ! $active,
-                        ])>
-                            @if ($link['icon'] === 'home')
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
-                            @elseif ($link['icon'] === 'orders')
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                            @elseif ($link['icon'] === 'bills')
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                            @else
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                            @endif
-                        </span>
-                        {{ $link['label'] }}
+                        {{ $tab['label'] }}
+                        @if (! empty($tab['badge']))
+                            <span @class([
+                                'flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold',
+                                'bg-[#8b5e3c] text-white' => $active,
+                                'bg-[#8b5e3c]/15 text-[#8b5e3c]' => ! $active,
+                            ])>{{ $tab['badge'] }}</span>
+                        @endif
                     </a>
                 @endforeach
-            </nav>
+            </div>
+        </nav>
 
-            @auth
-            <a href="{{ route('waiter.profile.edit') }}" class="m-4 block rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 transition hover:bg-white/8">
-                <div class="flex items-center gap-3">
-                    @if (auth()->user()->avatar_url)
-                        <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="h-9 w-9 rounded-full object-cover">
-                    @else
-                        <div class="flex h-9 w-9 items-center justify-center rounded-full bg-[#8b5e3c] text-xs font-bold text-white">
-                            {{ auth()->user()->initials }}
-                        </div>
-                    @endif
-                    <div class="min-w-0">
-                        <p class="truncate text-sm font-semibold text-white/90">{{ auth()->user()->name }}</p>
-                        <p class="truncate text-[11px] text-white/40">{{ auth()->user()->title ?: 'Waiter' }}</p>
-                    </div>
-                </div>
-            </a>
-            @endauth
-        </aside>
+        @if ($heading)
+            <h1 class="mb-5 font-display text-2xl font-extrabold tracking-tight text-ink">{{ $heading }}</h1>
+        @endif
 
-        <div class="flex min-w-0 flex-1 flex-col">
-            <header class="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-[#d9cbb8]/70 bg-[#f7f0e8]/80 px-4 py-3.5 backdrop-blur-md sm:px-6 lg:px-8">
-                <div class="flex items-center gap-3">
-                    <button
-                        type="button"
-                        x-on:click="sidebarOpen = true"
-                        class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#d9cbb8] bg-white text-ink shadow-sm lg:hidden"
-                        aria-label="Open menu"
-                    >
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                    </button>
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.15em] text-ink-soft/45">{{ $eyebrow }}</p>
-                        <h1 class="font-display text-xl font-extrabold tracking-tight text-ink sm:text-2xl">{{ $heading }}</h1>
-                    </div>
-                </div>
-                <div class="hidden items-center gap-2 rounded-xl border border-[#d9cbb8] bg-white px-3 py-2 text-xs font-medium text-ink-soft/70 shadow-sm sm:flex">
-                    <span class="h-2 w-2 rounded-full bg-[#8b5e3c]"></span>
-                    {{ now()->format('D, M j · g:i A') }}
-                </div>
-            </header>
-
-            <main class="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-                {{ $slot }}
-            </main>
-        </div>
+        {{ $slot }}
     </div>
 
     <div

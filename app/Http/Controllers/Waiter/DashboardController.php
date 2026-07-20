@@ -11,47 +11,41 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
-        $pending = Order::query()->where('service_status', Order::SERVICE_PENDING)->count();
-        $preparing = Order::query()->where('service_status', Order::SERVICE_PREPARING)->count();
-        $servedUnpaid = Order::query()
-            ->where('service_status', Order::SERVICE_SERVED)
-            ->where('payment_status', Order::PAYMENT_UNPAID)
-            ->count();
-        $paidToday = Order::query()
-            ->where('payment_status', Order::PAYMENT_PAID)
-            ->whereDate('paid_at', today())
-            ->count();
-        $revenueToday = (int) Order::query()
-            ->where('payment_status', Order::PAYMENT_PAID)
-            ->whereDate('paid_at', today())
-            ->sum('total');
+        $activeOrders = Order::query()
+            ->with('menuItem')
+            ->where(function ($query): void {
+                $query->whereIn('service_status', [Order::SERVICE_PENDING, Order::SERVICE_PREPARING])
+                    ->orWhere(function ($query): void {
+                        $query->where('service_status', Order::SERVICE_SERVED)
+                            ->where('payment_status', Order::PAYMENT_UNPAID);
+                    });
+            })
+            ->latest()
+            ->get();
 
-        $activeByTable = $this->groupTables(
-            Order::query()
-                ->with('menuItem')
-                ->whereIn('service_status', [Order::SERVICE_PENDING, Order::SERVICE_PREPARING])
-                ->latest()
-                ->get()
-        )->take(6);
+        $occupied = $this->groupTables($activeOrders);
 
-        $unpaidByTable = $this->groupTables(
-            Order::query()
-                ->with('menuItem')
-                ->where('payment_status', Order::PAYMENT_UNPAID)
-                ->where('service_status', Order::SERVICE_SERVED)
-                ->latest('served_at')
-                ->get()
-        )->take(6);
+        $occupiedNumbers = $occupied
+            ->pluck('table_number')
+            ->filter(fn ($number) => is_numeric($number))
+            ->map(fn ($number) => (int) $number)
+            ->all();
 
-        return view('waiter-dashboard', compact(
-            'pending',
-            'preparing',
-            'servedUnpaid',
-            'paidToday',
-            'revenueToday',
-            'activeByTable',
-            'unpaidByTable',
-        ));
+        $tableCount = max(12, empty($occupiedNumbers) ? 12 : max($occupiedNumbers));
+
+        $available = collect(range(1, $tableCount))
+            ->reject(fn (int $number) => in_array($number, $occupiedNumbers, true))
+            ->map(fn (int $number) => (object) [
+                'table_number' => (string) $number,
+                'capacity' => 4,
+            ])
+            ->values();
+
+        return view('waiter-dashboard', [
+            'tables' => $occupied,
+            'available' => $available,
+            'attentionCount' => $occupied->where('needs_attention', true)->count(),
+        ]);
     }
 
     /**
@@ -63,11 +57,35 @@ class DashboardController extends Controller
         return $orders
             ->groupBy(fn (Order $order) => (string) ($order->table_number ?: '—'))
             ->map(function (Collection $items, string $tableNumber) {
+                $pending = $items->where('service_status', Order::SERVICE_PENDING)->count();
+                $preparing = $items->where('service_status', Order::SERVICE_PREPARING)->count();
+                $servedUnpaid = $items
+                    ->where('service_status', Order::SERVICE_SERVED)
+                    ->where('payment_status', Order::PAYMENT_UNPAID)
+                    ->count();
+
+                $status = match (true) {
+                    $preparing > 0 => 'Preparing',
+                    $pending > 0 => 'Waiting to Order',
+                    $servedUnpaid > 0 => 'Ready to Serve',
+                    default => 'Eating',
+                };
+
+                $oldest = $items->sortBy('created_at')->first();
+                $seatedMinutes = $oldest?->created_at?->diffInMinutes(now()) ?? 0;
+
                 return (object) [
                     'table_number' => $tableNumber,
                     'orders' => $items->values(),
                     'item_count' => $items->sum('items_count'),
-                    'total' => $items->sum('total'),
+                    'total' => (int) $items->sum('total'),
+                    'status' => $status,
+                    'needs_attention' => $pending > 0 || $preparing > 0,
+                    'guest_count' => min(4, max(1, (int) ceil($items->sum('items_count') / 2))),
+                    'capacity' => 4,
+                    'seated_minutes' => $seatedMinutes,
+                    'has_open_service' => $items->whereIn('service_status', [Order::SERVICE_PENDING, Order::SERVICE_PREPARING])->isNotEmpty(),
+                    'unpaid_total' => (int) $items->where('payment_status', Order::PAYMENT_UNPAID)->sum('total'),
                 ];
             })
             ->sortBy(fn ($table) => is_numeric($table->table_number) ? (int) $table->table_number : PHP_INT_MAX)

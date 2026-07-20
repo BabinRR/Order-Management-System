@@ -1,82 +1,93 @@
-<x-waiter-layout title="Waiter Dashboard" eyebrow="Waiter" heading="Dashboard">
-<div class="space-y-6">
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-2xl border border-[#d9cbb8] bg-white p-5 shadow-[0_1px_2px_rgba(26,31,28,0.04)]">
-            <p class="text-xs font-semibold uppercase tracking-wider text-ink-soft/50">Pending</p>
-            <p class="mt-2 font-display text-3xl font-extrabold text-ink">{{ $pending }}</p>
-            <p class="mt-1 text-sm text-ink-soft/55">Awaiting kitchen</p>
-        </div>
-        <div class="rounded-2xl border border-[#d9cbb8] bg-white p-5 shadow-[0_1px_2px_rgba(26,31,28,0.04)]">
-            <p class="text-xs font-semibold uppercase tracking-wider text-ink-soft/50">Preparing</p>
-            <p class="mt-2 font-display text-3xl font-extrabold text-ink">{{ $preparing }}</p>
-            <p class="mt-1 text-sm text-ink-soft/55">In the kitchen</p>
-        </div>
-        <div class="rounded-2xl border border-[#d9cbb8] bg-white p-5 shadow-[0_1px_2px_rgba(26,31,28,0.04)]">
-            <p class="text-xs font-semibold uppercase tracking-wider text-ink-soft/50">Unpaid bills</p>
-            <p class="mt-2 font-display text-3xl font-extrabold text-[#a0522d]">{{ $servedUnpaid }}</p>
-            <p class="mt-1 text-sm text-ink-soft/55">Served, need payment</p>
-        </div>
-        <div class="rounded-2xl border border-[#d9cbb8] bg-white p-5 shadow-[0_1px_2px_rgba(26,31,28,0.04)]">
-            <p class="text-xs font-semibold uppercase tracking-wider text-ink-soft/50">Paid today</p>
-            <p class="mt-2 font-display text-3xl font-extrabold text-[#5d4037]">{{ $paidToday }}</p>
-            <p class="mt-1 text-sm font-semibold text-[#8b5e3c]">Rs {{ number_format($revenueToday) }}</p>
-        </div>
-    </div>
+<x-waiter-layout title="My Tables" heading="My Tables">
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    @foreach ($tables as $table)
+        <article @class([
+            'relative flex flex-col rounded-[1.35rem] border bg-white p-4 shadow-[0_1px_3px_rgba(44,33,24,0.06)]',
+            'border-[#8b5e3c] ring-1 ring-[#8b5e3c]/20' => $table->needs_attention,
+            'border-[#d9cbb8]' => ! $table->needs_attention,
+        ])>
+            @if ($table->needs_attention)
+                <span class="absolute right-4 top-4 h-2.5 w-2.5 rounded-full bg-[#8b5e3c]"></span>
+            @endif
 
-    <div class="grid gap-4 xl:grid-cols-2">
-        <section class="overflow-hidden rounded-2xl border border-[#d9cbb8] bg-white shadow-[0_1px_2px_rgba(26,31,28,0.04)]">
-            <div class="flex items-center justify-between border-b border-[#f0e6da] px-5 py-4">
-                <div>
-                    <h2 class="font-display text-lg font-extrabold text-ink">Active by table</h2>
-                    <p class="text-sm text-ink-soft/60">Pending & preparing</p>
+            <div class="flex items-start gap-3">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#8b5e3c] font-display text-sm font-extrabold text-white">
+                    T{{ $table->table_number }}
                 </div>
-                <a href="{{ route('waiter.orders.index') }}" class="text-sm font-semibold text-[#8b5e3c] hover:underline">View all</a>
+                <div class="min-w-0 flex-1 pt-0.5">
+                    <div class="flex items-center gap-1.5 text-sm text-ink-soft/65">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        <span>{{ $table->guest_count }}/{{ $table->capacity }}</span>
+                    </div>
+                    <p class="mt-0.5 text-xs text-ink-soft/45">Seated {{ $table->seated_minutes }}m ago</p>
+                </div>
             </div>
-            <ul class="divide-y divide-[#f0e6da]">
-                @forelse ($activeByTable as $table)
-                    <li class="px-5 py-3.5">
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="min-w-0">
-                                <p class="font-semibold text-ink">Table {{ $table->table_number }}</p>
-                                <p class="truncate text-sm text-ink-soft/60">
-                                    {{ $table->orders->pluck('menuItem.name')->filter()->take(3)->implode(', ') }}
-                                    @if ($table->orders->count() > 3)…@endif
-                                </p>
-                            </div>
-                            <div class="shrink-0 text-right">
-                                <p class="text-xs font-semibold text-ink-soft/55">{{ $table->item_count }} items</p>
-                                <a href="{{ route('waiter.orders.index', ['table' => $table->table_number]) }}" class="text-xs font-semibold text-[#8b5e3c] hover:underline">Open</a>
-                            </div>
-                        </div>
-                    </li>
-                @empty
-                    <li class="px-5 py-10 text-center text-sm text-ink-soft/55">No active kitchen orders.</li>
-                @endforelse
-            </ul>
-        </section>
 
-        <section class="overflow-hidden rounded-2xl border border-[#d9cbb8] bg-white shadow-[0_1px_2px_rgba(26,31,28,0.04)]">
-            <div class="flex items-center justify-between border-b border-[#f0e6da] px-5 py-4">
-                <div>
-                    <h2 class="font-display text-lg font-extrabold text-ink">Bills by table</h2>
-                    <p class="text-sm text-ink-soft/60">Served & unpaid</p>
-                </div>
-                <a href="{{ route('waiter.bills.index') }}" class="text-sm font-semibold text-[#8b5e3c] hover:underline">View all</a>
+            <div class="mt-4 flex items-center justify-between gap-2">
+                <span class="rounded-full bg-[#f5e6d8] px-2.5 py-1 text-[11px] font-semibold text-[#8b5e3c]">{{ $table->status }}</span>
+                <p class="font-display text-lg font-extrabold text-ink">Rs {{ number_format($table->total) }}</p>
             </div>
-            <ul class="divide-y divide-[#f0e6da]">
-                @forelse ($unpaidByTable as $table)
-                    <li class="flex items-center justify-between gap-3 px-5 py-3.5">
-                        <div class="min-w-0">
-                            <p class="font-semibold text-ink">Table {{ $table->table_number }}</p>
-                            <p class="truncate text-sm text-ink-soft/60">{{ $table->item_count }} items · Rs {{ number_format($table->total) }}</p>
-                        </div>
-                        <a href="{{ route('waiter.bills.table', $table->table_number) }}" class="shrink-0 rounded-lg bg-[#8b5e3c] px-3 py-1.5 text-xs font-semibold text-white">Pay</a>
-                    </li>
-                @empty
-                    <li class="px-5 py-10 text-center text-sm text-ink-soft/55">No unpaid bills right now.</li>
-                @endforelse
-            </ul>
-        </section>
-    </div>
+
+            <div class="mt-4 flex flex-1 flex-col gap-2">
+                <a
+                    href="{{ route('waiter.orders.index', ['table' => $table->table_number]) }}"
+                    class="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#3e2723] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#5d4037]"
+                >
+                    <span class="text-base leading-none">+</span> Add to Order
+                </a>
+                <div class="grid grid-cols-2 gap-2">
+                    <a
+                        href="{{ route('waiter.bills.table', $table->table_number) }}"
+                        class="rounded-xl border border-[#d9cbb8] bg-white px-3 py-2 text-center text-xs font-semibold text-ink-soft transition hover:border-[#8b5e3c]"
+                    >View Check</a>
+                    @if ($table->has_open_service)
+                        <form method="POST" action="{{ route('waiter.orders.table.served', $table->table_number) }}">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="w-full rounded-xl border border-[#d9cbb8] bg-white px-3 py-2 text-xs font-semibold text-ink-soft transition hover:border-[#8b5e3c]">
+                                Clear Table
+                            </button>
+                        </form>
+                    @else
+                        <a
+                            href="{{ route('waiter.bills.table', $table->table_number) }}"
+                            class="rounded-xl border border-[#d9cbb8] bg-white px-3 py-2 text-center text-xs font-semibold text-ink-soft transition hover:border-[#8b5e3c]"
+                        >Collect Pay</a>
+                    @endif
+                </div>
+            </div>
+        </article>
+    @endforeach
+
+    @foreach ($available as $table)
+        <article class="flex flex-col items-center justify-between rounded-[1.35rem] border border-dashed border-[#d9cbb8] bg-white/70 p-4">
+            <div class="flex w-full items-start gap-3">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#efe6da] font-display text-sm font-extrabold text-ink-soft/45">
+                    T{{ $table->table_number }}
+                </div>
+                <p class="pt-2 text-sm text-ink-soft/45">Cap: {{ $table->capacity }}</p>
+            </div>
+
+            <div class="flex flex-1 flex-col items-center justify-center py-6 text-center">
+                <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f0e6da] text-ink-soft/35">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <p class="text-sm font-semibold text-ink-soft/50">Table Available</p>
+            </div>
+
+            <a
+                href="{{ route('waiter.orders.index', ['table' => $table->table_number]) }}"
+                class="w-full rounded-xl border border-[#d9cbb8] bg-white px-3 py-2.5 text-center text-sm font-semibold text-ink-soft transition hover:border-[#8b5e3c] hover:text-[#8b5e3c]"
+            >
+                Seat Guests
+            </a>
+        </article>
+    @endforeach
 </div>
+
+@if ($tables->isEmpty() && $available->isEmpty())
+    <p class="rounded-2xl border border-dashed border-[#d9cbb8] bg-white/60 py-16 text-center text-sm text-ink-soft/55">
+        No tables to show yet.
+    </p>
+@endif
 </x-waiter-layout>

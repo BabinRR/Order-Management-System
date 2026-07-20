@@ -1,4 +1,4 @@
-<x-waiter-layout title="Profile Settings" eyebrow="Account" heading="Profile Settings">
+<x-waiter-layout title="Profile" heading="My Profile">
 <div class="mx-auto max-w-3xl space-y-6">
     {{-- Profile summary --}}
     <section class="overflow-hidden rounded-2xl border border-[#d9cbb8] bg-white shadow-[0_1px_2px_rgba(26,31,28,0.04)]">

@@ -1,4 +1,4 @@
-<x-waiter-layout title="Bills &amp; Payments" eyebrow="Payments" heading="Bills by Table">
+<x-waiter-layout title="Bills" heading="Bills & Checks">
 <div class="space-y-5">
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div class="flex flex-wrap gap-2">

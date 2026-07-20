@@ -1,184 +1,202 @@
-<x-admin-layout title="Dashboard" eyebrow="Overview" heading="Dashboard">
+<x-admin-layout title="Control Floor">
 @php
-    $maxRevenue = max(1, ...array_column($weeklyRevenue, 'amount'));
-    $cards = [
-        [
-            'label' => 'Revenue today',
-            'value' => 'Rs '.number_format($stats['revenue_today']),
-            'delta' => $stats['revenue_today_delta'],
-            'sub' => 'vs yesterday',
-            'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2m0-8c1.11 0 2.08.402 2.599 1M12 16c-1.11 0-2.08-.402-2.599-1',
-            'tone' => 'wood',
-        ],
-        [
-            'label' => 'Revenue this week',
-            'value' => 'Rs '.number_format($stats['revenue_week']),
-            'delta' => $stats['revenue_week_delta'],
-            'sub' => 'vs last week',
-            'icon' => 'M3 13h4v8H3v-8zm7-6h4v14h-4V7zm7 3h4v11h-4V10z',
-            'tone' => 'ember',
-        ],
-        [
-            'label' => 'Orders today',
-            'value' => number_format($stats['orders_today']),
-            'delta' => null,
-            'sub' => number_format($stats['orders_week']).' this week',
-            'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
-            'tone' => 'wood',
-        ],
-        [
-            'label' => 'Avg. order value',
-            'value' => 'Rs '.number_format($stats['avg_order'], 0),
-            'delta' => null,
-            'sub' => $stats['active_workers'].' staff active',
-            'icon' => 'M13 10V3L4 14h7v7l9-11h-7z',
-            'tone' => 'ember',
-        ],
-    ];
+    $orderDelta = $stats['orders_delta'];
+    $revenueDelta = $stats['revenue_delta'];
 @endphp
 
-<div class="space-y-6">
-    {{-- Stat cards --}}
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        @foreach ($cards as $index => $card)
-            <div class="fade-up rounded-2xl border border-[#d9cbb8] bg-white p-5 shadow-[0_1px_2px_rgba(26,31,28,0.04)]" style="animation-delay: {{ $index * 0.06 }}s">
-                <div class="flex items-start justify-between">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-ink-soft/50">{{ $card['label'] }}</p>
-                    <span @class([
-                        'flex h-9 w-9 items-center justify-center rounded-xl',
-                        'bg-[#ede0d0] text-[#5d4037]' => $card['tone'] === 'wood',
-                        'bg-[#f5e6d8] text-[#a0522d]' => $card['tone'] === 'ember',
-                    ])>
-                        <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $card['icon'] }}"/></svg>
-                    </span>
-                </div>
-                <p class="mt-3 font-display text-[1.7rem] font-extrabold leading-none tracking-tight text-ink">{{ $card['value'] }}</p>
-                <div class="mt-2.5 flex items-center gap-1.5 text-sm">
-                    @if (! is_null($card['delta']))
-                        @php $up = $card['delta'] >= 0; @endphp
-                        <span @class([
-                            'inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs font-bold',
-                            'bg-[#ede0d0] text-[#5d4037]' => $up,
-                            'bg-[#f5e6d8] text-[#a0522d]' => ! $up,
-                        ])>
-                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="{{ $up ? 'M5 10l7-7m0 0l7 7m-7-7v18' : 'M19 14l-7 7m0 0l-7-7m7 7V3' }}"/>
-                            </svg>
-                            {{ abs($card['delta']) }}%
-                        </span>
-                    @endif
-                    <span class="text-ink-soft/55">{{ $card['sub'] }}</span>
-                </div>
-            </div>
-        @endforeach
-    </div>
-
-    <div class="grid gap-4 xl:grid-cols-5">
-        {{-- Weekly revenue chart --}}
-        <section class="fade-up xl:col-span-3 rounded-2xl border border-[#d9cbb8] bg-white p-5 shadow-[0_1px_2px_rgba(26,31,28,0.04)] sm:p-6" style="animation-delay: 0.12s">
-            <div class="mb-6 flex items-end justify-between gap-4">
+<div class="space-y-6" x-data="{ filter: 'all' }" style="color:#f5f5f5;">
+    {{-- KPI cards --}}
+    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="admin-card p-5">
+            <div class="flex items-start justify-between">
                 <div>
-                    <h2 class="font-display text-lg font-extrabold text-ink">Weekly revenue</h2>
-                    <p class="mt-0.5 text-sm text-ink-soft/60">Last 7 days sales performance</p>
+                    <p class="admin-muted text-xs font-medium">Total Orders</p>
+                    <p class="font-control admin-kpi-value mt-2 text-3xl font-semibold tracking-tight">{{ number_format($stats['orders_today']) }}</p>
+                    @if (! is_null($orderDelta))
+                        <p class="mt-2 text-xs font-semibold" style="color: {{ $orderDelta >= 0 ? '#34d399' : '#fb7185' }};">
+                            {{ $orderDelta >= 0 ? '+' : '' }}{{ $orderDelta }}%
+                        </p>
+                    @else
+                        <p class="admin-muted mt-2 text-xs">vs yesterday</p>
+                    @endif
                 </div>
-                <div class="text-right">
-                    <p class="font-display text-xl font-extrabold text-[#8b5e3c]">Rs {{ number_format($stats['revenue_week']) }}</p>
-                    <p class="text-xs text-ink-soft/55">total this week</p>
+                <span class="flex h-10 w-10 items-center justify-center rounded-full" style="background:rgba(255,255,255,0.06); color:#fbbf24;">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                </span>
+            </div>
+        </div>
+
+        <div class="admin-card p-5">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="admin-muted text-xs font-medium">Revenue</p>
+                    <p class="font-control admin-kpi-value mt-2 text-3xl font-semibold tracking-tight">Rs {{ number_format($stats['revenue_today']) }}</p>
+                    @if (! is_null($revenueDelta))
+                        <p class="mt-2 text-xs font-semibold" style="color: {{ $revenueDelta >= 0 ? '#34d399' : '#fb7185' }};">
+                            {{ $revenueDelta >= 0 ? '+' : '' }}{{ $revenueDelta }}%
+                        </p>
+                    @else
+                        <p class="admin-muted mt-2 text-xs">today</p>
+                    @endif
                 </div>
+                <span class="flex h-10 w-10 items-center justify-center rounded-full" style="background:rgba(16,185,129,0.12); color:#34d399;">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2"/></svg>
+                </span>
             </div>
+        </div>
 
-            <div class="flex h-56 items-end gap-2 sm:gap-3">
-                @foreach ($weeklyRevenue as $index => $day)
-                    @php $height = max(4, ($day['amount'] / $maxRevenue) * 100); @endphp
-                    <div class="group flex flex-1 flex-col items-center gap-2">
-                        <div class="relative flex w-full flex-1 items-end">
-                            <div
-                                class="bar-fill relative w-full rounded-t-lg bg-gradient-to-t from-[#5d4037] to-[#b8956c] transition-all duration-300 group-hover:from-[#a0522d] group-hover:to-[#c4895a]"
-                                style="height: {{ $height }}%; animation-delay: {{ $index * 0.06 }}s"
-                            >
-                                <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition group-hover:opacity-100">
-                                    Rs {{ number_format($day['amount']) }}
-                                </span>
-                            </div>
-                        </div>
-                        <span class="text-xs font-semibold text-ink-soft/60">{{ $day['day'] }}</span>
-                    </div>
-                @endforeach
+        <div class="admin-card p-5">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="admin-muted text-xs font-medium">Active Tables</p>
+                    <p class="font-control admin-kpi-value mt-2 text-3xl font-semibold tracking-tight">{{ $stats['active_tables'] }}/{{ $stats['table_total'] }}</p>
+                    <p class="admin-muted mt-2 text-xs">on the floor</p>
+                </div>
+                <span class="flex h-10 w-10 items-center justify-center rounded-full" style="background:rgba(14,165,233,0.12); color:#38bdf8;">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4v7a2 2 0 002 2h0a2 2 0 002-2V4M9 4v16M15 8c0 0 2-1 2-3s-1-3-2-3v14"/></svg>
+                </span>
             </div>
-        </section>
+        </div>
 
-        {{-- Top items --}}
-        <section class="fade-up xl:col-span-2 rounded-2xl border border-[#d9cbb8] bg-white p-5 shadow-[0_1px_2px_rgba(26,31,28,0.04)] sm:p-6" style="animation-delay: 0.18s">
-            <h2 class="font-display text-lg font-extrabold text-ink">Top sellers</h2>
-            <p class="mt-0.5 text-sm text-ink-soft/60">By revenue this week</p>
-
-            <ul class="mt-5 space-y-2.5">
-                @forelse ($topItems as $rank => $item)
-                    <li class="flex items-center gap-3 rounded-xl border border-transparent bg-[#f7f0e8] px-3 py-2.5 transition hover:border-[#d9cbb8]">
-                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white text-xs font-bold text-ink-soft/70 shadow-sm">{{ $rank + 1 }}</span>
-                        <div class="min-w-0 flex-1">
-                            <p class="truncate text-sm font-semibold text-ink">{{ $item['name'] }}</p>
-                            <p class="text-xs text-ink-soft/55">{{ $item['orders'] }} orders</p>
-                        </div>
-                        <p class="shrink-0 text-sm font-bold text-[#8b5e3c]">Rs {{ number_format($item['revenue']) }}</p>
-                    </li>
-                @empty
-                    <li class="rounded-xl bg-[#f7f0e8] px-3 py-8 text-center text-sm text-ink-soft/55">No sales recorded yet.</li>
-                @endforelse
-            </ul>
-        </section>
+        <div class="admin-card p-5">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="admin-muted text-xs font-medium">Avg Ticket Time</p>
+                    <p class="font-control admin-kpi-value mt-2 text-3xl font-semibold tracking-tight">{{ $stats['avg_ticket_minutes'] }}m</p>
+                    <p class="admin-muted mt-2 text-xs">kitchen pace</p>
+                </div>
+                <span class="flex h-10 w-10 items-center justify-center rounded-full" style="background:rgba(249,115,22,0.12); color:#fb923c;">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </span>
+            </div>
+        </div>
     </div>
 
-    {{-- Recent orders --}}
-    <section class="fade-up overflow-hidden rounded-2xl border border-[#d9cbb8] bg-white shadow-[0_1px_2px_rgba(26,31,28,0.04)]" style="animation-delay: 0.24s">
-        <div class="flex items-center justify-between border-b border-[#f0e6da] px-5 py-4 sm:px-6">
-            <div>
-                <h2 class="font-display text-lg font-extrabold text-ink">Recent orders</h2>
-                <p class="mt-0.5 text-sm text-ink-soft/60">Latest service activity</p>
+    <div class="grid gap-6 xl:grid-cols-5">
+        <section class="admin-panel xl:col-span-3 overflow-hidden">
+            <div class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between" style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                <div class="flex items-center gap-2">
+                    <h2 class="font-control text-lg font-semibold" style="color:#ffffff;">Active Orders</h2>
+                    <span class="rounded-full px-2 py-0.5 text-xs font-bold" style="background:rgba(255,255,255,0.12); color:rgba(255,255,255,0.8);">{{ $activeOrders->count() }}</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    <button type="button" @click="filter = 'all'" :style="filter === 'all' ? 'background:#ffffff;color:#0a0a0a;' : 'background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.55);'" class="rounded-full px-3 py-1.5 text-xs font-semibold transition">All</button>
+                    <button type="button" @click="filter = 'pending'" :style="filter === 'pending' ? 'background:#f97316;color:#ffffff;' : 'background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.55);'" class="rounded-full px-3 py-1.5 text-xs font-semibold transition">Pending</button>
+                    <button type="button" @click="filter = 'preparing'" :style="filter === 'preparing' ? 'background:#0ea5e9;color:#ffffff;' : 'background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.55);'" class="rounded-full px-3 py-1.5 text-xs font-semibold transition">In Progress</button>
+                    <button type="button" @click="filter = 'ready'" :style="filter === 'ready' ? 'background:#10b981;color:#ffffff;' : 'background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.55);'" class="rounded-full px-3 py-1.5 text-xs font-semibold transition">Ready</button>
+                </div>
             </div>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full min-w-[640px] text-left text-sm">
-                <thead class="bg-[#f7f0e8] text-xs uppercase tracking-wider text-ink-soft/50">
-                    <tr>
-                        <th class="px-5 py-3 font-semibold sm:px-6">Order</th>
-                        <th class="px-5 py-3 font-semibold sm:px-6">Table</th>
-                        <th class="px-5 py-3 font-semibold sm:px-6">Items</th>
-                        <th class="px-5 py-3 font-semibold sm:px-6">Total</th>
-                        <th class="px-5 py-3 font-semibold sm:px-6">Status</th>
-                        <th class="px-5 py-3 font-semibold sm:px-6">Time</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-[#f0e6da]">
-                    @forelse ($recentOrders as $order)
-                        <tr class="transition hover:bg-[#f7f0e8]/70">
-                            <td class="px-5 py-3.5 font-semibold text-ink sm:px-6">{{ $order->reference }}</td>
-                            <td class="px-5 py-3.5 text-ink-soft sm:px-6">{{ $order->table_number }}</td>
-                            <td class="px-5 py-3.5 text-ink-soft sm:px-6">{{ $order->items_count }}</td>
-                            <td class="px-5 py-3.5 font-medium text-ink sm:px-6">Rs {{ number_format($order->total) }}</td>
-                            <td class="px-5 py-3.5 sm:px-6">
-                                @php
-                                    $statusClass = match ($order->status) {
-                                        'Completed' => 'bg-[#ede0d0] text-[#5d4037]',
-                                        'Preparing' => 'bg-[#f5e6d8] text-[#a0522d]',
-                                        default => 'bg-[#f0e6da] text-ink-soft',
-                                    };
-                                @endphp
-                                <span class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold {{ $statusClass }}">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-current opacity-70"></span>
-                                    {{ $order->status }}
+
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[560px] text-left text-sm">
+                    <thead style="color:rgba(255,255,255,0.4);">
+                        <tr class="text-[11px] uppercase tracking-wider">
+                            <th class="px-5 py-3 font-medium">Order</th>
+                            <th class="px-5 py-3 font-medium">Table</th>
+                            <th class="px-5 py-3 font-medium">Items</th>
+                            <th class="px-5 py-3 font-medium">Status</th>
+                            <th class="px-5 py-3 font-medium">Elapsed</th>
+                            <th class="px-5 py-3 font-medium">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($activeOrders as $row)
+                            <tr
+                                style="border-top:1px solid rgba(255,255,255,0.06);"
+                                x-show="filter === 'all' || filter === '{{ $row->status }}'"
+                            >
+                                <td class="px-5 py-3.5 font-semibold" style="color:#ffffff;">{{ $row->reference }}</td>
+                                <td class="px-5 py-3.5">
+                                    <span class="rounded-md px-2 py-0.5 text-xs font-semibold" style="background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.75);">T{{ $row->table_number }}</span>
+                                </td>
+                                <td class="px-5 py-3.5 admin-muted">{{ $row->items_count }}</td>
+                                <td class="px-5 py-3.5">
+                                    @if ($row->status === 'ready')
+                                        <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold" style="border:1px solid rgba(52,211,153,0.45); color:#34d399;">Ready</span>
+                                    @elseif ($row->status === 'preparing')
+                                        <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#0ea5e9; color:#ffffff;">In Progress</span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold" style="background:#f97316; color:#ffffff;">Pending</span>
+                                    @endif
+                                </td>
+                                <td class="px-5 py-3.5 font-mono text-xs admin-muted">{{ $row->elapsed }}</td>
+                                <td class="px-5 py-3.5">
+                                    @if ($row->status === 'pending' && $row->primary)
+                                        <form method="POST" action="{{ route('admin.orders.preparing', $row->primary) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="rounded-lg p-2" style="background:rgba(255,255,255,0.08); color:#38bdf8;" title="Start preparing">▶</button>
+                                        </form>
+                                    @elseif ($row->status === 'preparing' && $row->primary)
+                                        <form method="POST" action="{{ route('admin.orders.served', $row->primary) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="rounded-lg p-2" style="background:rgba(255,255,255,0.08); color:#34d399;" title="Mark ready">✓</button>
+                                        </form>
+                                    @else
+                                        <span class="inline-flex rounded-lg p-2" style="background:rgba(16,185,129,0.12); color:#34d399;">✓</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-5 py-14 text-center text-sm admin-muted">No active orders on the floor.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="space-y-6 xl:col-span-2">
+            <section class="admin-panel p-5">
+                <h2 class="font-control text-lg font-semibold" style="color:#ffffff;">Floor Status</h2>
+                <div class="mt-4 grid grid-cols-3 gap-2.5 sm:grid-cols-4">
+                    @foreach ($floorTables as $table)
+                        <div @class([
+                            'relative flex aspect-square flex-col items-center justify-center rounded-xl p-2 text-center',
+                            'admin-table-empty' => $table->state === 'empty',
+                            'admin-table-occupied' => $table->state === 'occupied',
+                            'admin-table-attention' => $table->state === 'attention',
+                        ])>
+                            @if ($table->needs_attention)
+                                <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full" style="background:#fb923c; box-shadow:0 0 8px rgba(251,146,60,0.8);"></span>
+                            @endif
+                            <p class="font-control text-sm font-bold">T{{ $table->table_number }}</p>
+                            @if ($table->state === 'empty')
+                                <p class="mt-1 text-[9px] font-semibold uppercase tracking-wider" style="opacity:0.7;">Empty</p>
+                            @else
+                                <p class="mt-1 text-[10px] font-medium" style="opacity:0.85;">{{ $table->guest_count }} guests</p>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+
+            <section class="admin-panel p-5">
+                <h2 class="font-control text-lg font-semibold" style="color:#ffffff;">Live Feed</h2>
+                <ul class="mt-5 space-y-0">
+                    @forelse ($liveFeed as $event)
+                        <li class="relative flex gap-3 pb-5 last:pb-0">
+                            <div class="flex flex-col items-center">
+                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full" style="background:rgba(14,165,233,0.18); color:#38bdf8;">
+                                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01"/></svg>
                                 </span>
-                            </td>
-                            <td class="px-5 py-3.5 text-ink-soft/60 sm:px-6">{{ $order->created_at->format('M j, g:i A') }}</td>
-                        </tr>
+                                @if (! $loop->last)
+                                    <span class="mt-1 w-px flex-1" style="background:rgba(255,255,255,0.12);"></span>
+                                @endif
+                            </div>
+                            <div class="min-w-0 pb-1">
+                                <p class="text-sm font-medium" style="color:rgba(255,255,255,0.9);">{{ $event->message }}</p>
+                                <p class="admin-muted mt-0.5 text-xs">{{ $event->time }}</p>
+                            </div>
+                        </li>
                     @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-sm text-ink-soft/55">No orders yet.</td>
-                        </tr>
+                        <li class="py-6 text-center text-sm admin-muted">Waiting for floor activity…</li>
                     @endforelse
-                </tbody>
-            </table>
+                </ul>
+            </section>
         </div>
-    </section>
+    </div>
 </div>
 </x-admin-layout>

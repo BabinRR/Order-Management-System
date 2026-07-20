@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MenuController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\WorkerController;
 use App\Http\Controllers\Auth\EmailVerificationController;
@@ -76,6 +77,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:ad
 
     Route::resource('workers', WorkerController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('menu', MenuController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    Route::patch('/orders/{order}/preparing', [AdminOrderController::class, 'markPreparing'])->name('orders.preparing');
+    Route::patch('/orders/{order}/served', [AdminOrderController::class, 'markServed'])->name('orders.served');
 
     Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [AdminProfileController::class, 'update'])->name('profile.update');
