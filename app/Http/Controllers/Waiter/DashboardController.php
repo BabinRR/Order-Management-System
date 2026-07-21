@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Waiter;
 
 use App\Http\Controllers\Controller;
+use App\Models\DiningTable;
 use App\Models\Order;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -31,13 +32,13 @@ class DashboardController extends Controller
             ->map(fn ($number) => (int) $number)
             ->all();
 
-        $tableCount = max(12, empty($occupiedNumbers) ? 12 : max($occupiedNumbers));
+        $configured = DiningTable::activeOrdered();
 
-        $available = collect(range(1, $tableCount))
-            ->reject(fn (int $number) => in_array($number, $occupiedNumbers, true))
-            ->map(fn (int $number) => (object) [
-                'table_number' => (string) $number,
-                'capacity' => 4,
+        $available = $configured
+            ->reject(fn (DiningTable $table) => in_array($table->number, $occupiedNumbers, true))
+            ->map(fn (DiningTable $table) => (object) [
+                'table_number' => (string) $table->number,
+                'capacity' => $table->seats,
             ])
             ->values();
 
@@ -73,6 +74,7 @@ class DashboardController extends Controller
 
                 $oldest = $items->sortBy('created_at')->first();
                 $seatedMinutes = $oldest?->created_at?->diffInMinutes(now()) ?? 0;
+                $capacity = DiningTable::seatsFor($tableNumber);
 
                 return (object) [
                     'table_number' => $tableNumber,
@@ -81,8 +83,8 @@ class DashboardController extends Controller
                     'total' => (int) $items->sum('total'),
                     'status' => $status,
                     'needs_attention' => $pending > 0 || $preparing > 0,
-                    'guest_count' => min(4, max(1, (int) ceil($items->sum('items_count') / 2))),
-                    'capacity' => 4,
+                    'guest_count' => min($capacity, max(1, (int) ceil($items->sum('items_count') / 2))),
+                    'capacity' => $capacity,
                     'seated_minutes' => $seatedMinutes,
                     'has_open_service' => $items->whereIn('service_status', [Order::SERVICE_PENDING, Order::SERVICE_PREPARING])->isNotEmpty(),
                     'unpaid_total' => (int) $items->where('payment_status', Order::PAYMENT_UNPAID)->sum('total'),

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DiningTable;
 use App\Models\Order;
 use App\Models\Worker;
 use Illuminate\Support\Carbon;
@@ -118,19 +119,20 @@ class DashboardController extends Controller
      */
     private function buildFloor(Collection $orders): Collection
     {
+        $configured = DiningTable::activeOrdered();
         $byTable = $orders
             ->filter(fn (Order $order) => filled($order->table_number))
             ->groupBy(fn (Order $order) => (string) $order->table_number);
 
-        $maxTable = max(12, $byTable->keys()->filter(fn ($n) => is_numeric($n))->map(fn ($n) => (int) $n)->max() ?: 12);
-
-        return collect(range(1, $maxTable))->map(function (int $number) use ($byTable) {
-            $key = (string) $number;
+        return $configured->map(function (DiningTable $table) use ($byTable) {
+            $key = (string) $table->number;
             $items = $byTable->get($key, collect());
 
             if ($items->isEmpty()) {
                 return (object) [
+                    'id' => $table->id,
                     'table_number' => $key,
+                    'seats' => $table->seats,
                     'state' => 'empty',
                     'guest_count' => 0,
                     'needs_attention' => false,
@@ -140,14 +142,17 @@ class DashboardController extends Controller
             $pending = $items->where('service_status', Order::SERVICE_PENDING)->count();
             $preparing = $items->where('service_status', Order::SERVICE_PREPARING)->count();
             $needsAttention = $pending > 0 || $preparing > 0;
+            $guestEstimate = min($table->seats, max(1, (int) ceil($items->sum('items_count') / 2)));
 
             return (object) [
+                'id' => $table->id,
                 'table_number' => $key,
+                'seats' => $table->seats,
                 'state' => $needsAttention ? 'attention' : 'occupied',
-                'guest_count' => min(4, max(1, (int) ceil($items->sum('items_count') / 2))),
+                'guest_count' => $guestEstimate,
                 'needs_attention' => $needsAttention,
             ];
-        });
+        })->values();
     }
 
     private function averageTicketMinutes(): int

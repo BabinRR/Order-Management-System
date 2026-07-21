@@ -35,17 +35,19 @@
             <form method="POST" action="{{ route('customer.table.select') }}" class="space-y-5">
                 @csrf
                 <div>
-                    <label for="table_number" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Table number</label>
-                    <input
+                    <label for="table_number" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Table</label>
+                    <select
                         id="table_number"
-                        type="number"
                         name="table_number"
-                        min="1"
-                        max="50"
-                        value="{{ old('table_number', 1) }}"
                         required
                         class="w-full rounded-2xl border border-[#e0d8cc] bg-[#f9f7f2] px-4 py-3 text-sm outline-none transition focus:border-[#8b5e3c] focus:ring-2 focus:ring-[#8b5e3c]/20"
                     >
+                        @foreach ($tables as $diningTable)
+                            <option value="{{ $diningTable->number }}" @selected((int) old('table_number', 1) === $diningTable->number)>
+                                Table {{ $diningTable->number }} · {{ $diningTable->seats }} seats
+                            </option>
+                        @endforeach
+                    </select>
                     @error('table_number') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
                 </div>
                 <div>

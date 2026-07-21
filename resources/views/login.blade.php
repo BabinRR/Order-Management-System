@@ -28,8 +28,8 @@
         role: 'admin',
         showPassword: false,
         labels: {
-            admin: { button: 'Sign In to Admin Portal', hint: 'Full system control and analytics' },
-            waiter: { button: 'Sign In to Waiter Portal', hint: 'Tables, orders, and bills' },
+            admin: { button: 'Sign In to Admin Portal', hint: 'Full system control and analytics', loginLabel: 'Email Address', loginPlaceholder: 'you@restaurant.com', passwordLabel: 'Password', passwordPlaceholder: '••••••••' },
+            waiter: { button: 'Sign In to Waiter Portal', hint: 'Sign in with your name and default password', loginLabel: 'Your name', loginPlaceholder: 'e.g. Alex Chen', passwordLabel: 'Password', passwordPlaceholder: '1234abcd' },
             customer: { button: 'Continue to Customer Order', hint: 'Browse the menu and order from your table' }
         }
     }"
@@ -111,6 +111,12 @@
                 <h1 class="font-serif-login text-4xl font-semibold tracking-tight text-[#1a1a1a] sm:text-5xl">Welcome back</h1>
                 <p class="mt-2 text-sm text-[#6b6b6b]">Sign in to continue to your dashboard</p>
 
+                @if (session('status'))
+                    <div class="mt-5 rounded-xl px-4 py-3 text-sm" style="background:#efe8e0; color:#5d4037;">
+                        {{ session('status') }}
+                    </div>
+                @endif
+
                 {{-- Role tabs --}}
                 <div class="mt-8 flex rounded-xl p-1" style="background:#ebe7e2;">
                     <template x-for="item in [
@@ -143,21 +149,24 @@
                     @csrf
 
                     <div>
-                        <label for="email" class="mb-1.5 block text-xs font-semibold text-[#4a4a4a]">Email Address</label>
+                        <label for="login" class="mb-1.5 block text-xs font-semibold text-[#4a4a4a]" x-text="labels[role].loginLabel">Email Address</label>
                         <input
-                            id="email"
-                            type="email"
-                            name="email"
-                            value="{{ old('email') }}"
+                            id="login"
+                            type="text"
+                            name="login"
+                            value="{{ old('login', old('email')) }}"
                             required
                             autofocus
                             autocomplete="username"
-                            placeholder="you@restaurant.com"
+                            :placeholder="labels[role].loginPlaceholder"
                             class="w-full rounded-xl border bg-white px-3.5 py-3 text-sm outline-none transition"
-                            style="border-color: {{ $errors->has('email') ? '#7b352e' : '#ddd6ce' }};"
+                            style="border-color: {{ $errors->has('login') || $errors->has('email') ? '#7b352e' : '#ddd6ce' }};"
                             onfocus="this.style.borderColor='#7b352e'; this.style.boxShadow='0 0 0 3px rgba(123,53,46,0.12)'"
-                            onblur="this.style.borderColor='{{ $errors->has('email') ? '#7b352e' : '#ddd6ce' }}'; this.style.boxShadow='none'"
+                            onblur="this.style.borderColor='{{ $errors->has('login') || $errors->has('email') ? '#7b352e' : '#ddd6ce' }}'; this.style.boxShadow='none'"
                         >
+                        @error('login')
+                            <p class="mt-1.5 text-xs font-medium" style="color:#7b352e;">{{ $message }}</p>
+                        @enderror
                         @error('email')
                             <p class="mt-1.5 text-xs font-medium" style="color:#7b352e;">{{ $message }}</p>
                         @enderror
@@ -165,8 +174,8 @@
 
                     <div>
                         <div class="mb-1.5 flex items-center justify-between">
-                            <label for="password" class="text-xs font-semibold text-[#4a4a4a]">Password</label>
-                            <span class="text-xs font-semibold" style="color:#7b352e;" title="Ask your administrator to reset your password">Forgot password?</span>
+                            <label for="password" class="text-xs font-semibold text-[#4a4a4a]" x-text="labels[role].passwordLabel">Password</label>
+                            <a href="{{ route('password.request') }}" class="text-xs font-semibold hover:underline" style="color:#7b352e; text-decoration:none;">Forgot password?</a>
                         </div>
                         <div class="relative">
                             <input
@@ -175,7 +184,7 @@
                                 name="password"
                                 required
                                 autocomplete="current-password"
-                                placeholder="••••••••"
+                                :placeholder="labels[role].passwordPlaceholder"
                                 class="w-full rounded-xl border bg-white px-3.5 py-3 pr-11 text-sm outline-none transition"
                                 style="border-color: {{ $errors->has('password') ? '#7b352e' : '#ddd6ce' }};"
                                 onfocus="this.style.borderColor='#7b352e'; this.style.boxShadow='0 0 0 3px rgba(123,53,46,0.12)'"

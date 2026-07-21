@@ -150,27 +150,62 @@
 
         <div class="space-y-6 xl:col-span-2">
             <section class="admin-panel p-5">
-                <h2 class="font-control text-lg font-semibold" style="color:#ffffff;">Floor Status</h2>
-                <div class="mt-4 grid grid-cols-3 gap-2.5 sm:grid-cols-4">
-                    @foreach ($floorTables as $table)
-                        <div @class([
-                            'relative flex aspect-square flex-col items-center justify-center rounded-xl p-2 text-center',
-                            'admin-table-empty' => $table->state === 'empty',
-                            'admin-table-occupied' => $table->state === 'occupied',
-                            'admin-table-attention' => $table->state === 'attention',
-                        ])>
-                            @if ($table->needs_attention)
-                                <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full" style="background:#fb923c; box-shadow:0 0 8px rgba(251,146,60,0.8);"></span>
-                            @endif
-                            <p class="font-control text-sm font-bold">T{{ $table->table_number }}</p>
-                            @if ($table->state === 'empty')
-                                <p class="mt-1 text-[9px] font-semibold uppercase tracking-wider" style="opacity:0.7;">Empty</p>
-                            @else
-                                <p class="mt-1 text-[10px] font-medium" style="opacity:0.85;">{{ $table->guest_count }} guests</p>
-                            @endif
-                        </div>
-                    @endforeach
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h2 class="font-control text-lg font-semibold" style="color:#ffffff;">Floor Status</h2>
+                        <p class="admin-muted mt-0.5 text-xs">Set seats for each table</p>
+                    </div>
+                    <form method="POST" action="{{ route('admin.floor.tables.store') }}">
+                        @csrf
+                        <button type="submit" class="rounded-full px-3 py-1.5 text-xs font-semibold transition" style="background:rgba(255,255,255,0.08); color:#fff;">
+                            + Add table
+                        </button>
+                    </form>
                 </div>
+
+                <form method="POST" action="{{ route('admin.floor.update') }}" class="space-y-3">
+                    @csrf
+                    @method('PUT')
+                    <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                        @foreach ($floorTables as $index => $table)
+                            <div @class([
+                                'relative flex flex-col rounded-xl p-3 text-center',
+                                'admin-table-empty' => $table->state === 'empty',
+                                'admin-table-occupied' => $table->state === 'occupied',
+                                'admin-table-attention' => $table->state === 'attention',
+                            ])>
+                                @if ($table->needs_attention)
+                                    <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full" style="background:#fb923c; box-shadow:0 0 8px rgba(251,146,60,0.8);"></span>
+                                @endif
+                                <input type="hidden" name="tables[{{ $index }}][number]" value="{{ $table->table_number }}">
+                                <input type="hidden" name="tables[{{ $index }}][is_active]" value="1">
+                                <p class="font-control text-sm font-bold">T{{ $table->table_number }}</p>
+                                @if ($table->state === 'empty')
+                                    <p class="mt-1 text-[9px] font-semibold uppercase tracking-wider" style="opacity:0.7;">Empty</p>
+                                @else
+                                    <p class="mt-1 text-[10px] font-medium" style="opacity:0.85;">{{ $table->guest_count }} seated</p>
+                                @endif
+                                <label class="mt-2 block text-[10px] font-semibold uppercase tracking-wider" style="opacity:0.65;">Seats</label>
+                                <input
+                                    type="number"
+                                    name="tables[{{ $index }}][seats]"
+                                    min="1"
+                                    max="20"
+                                    value="{{ $table->seats }}"
+                                    class="mt-1 w-full rounded-lg border px-2 py-1.5 text-center text-sm font-semibold outline-none"
+                                    style="background:#0f0f0f; border-color:rgba(255,255,255,0.15); color:#fff;"
+                                >
+                            </div>
+                        @endforeach
+                    </div>
+                    <button
+                        type="submit"
+                        class="w-full rounded-full px-4 py-2.5 text-sm font-semibold text-white transition"
+                        style="background:#e11d48;"
+                    >
+                        Save seat counts
+                    </button>
+                </form>
             </section>
 
             <section class="admin-panel p-5">

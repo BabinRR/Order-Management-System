@@ -20,16 +20,28 @@ class LoginController extends Controller
     {
         $request->authenticate();
         $request->session()->regenerate();
+        $request->session()->forget('url.intended');
 
-        if (! $request->user()->hasVerifiedEmail()) {
-            return redirect()->route('verification.notice');
+        $user = $request->user();
+
+        if ($user->must_change_password) {
+            return redirect('/password/change');
         }
 
-        $home = $request->user()->isWaiter()
-            ? route('waiter.dashboard')
-            : route('admin.dashboard');
+        // Waiters verify via Gmail change-password code, not an email link.
+        if ($user->isWaiter()) {
+            if (! $user->hasVerifiedEmail()) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+            }
 
-        return redirect()->to($home);
+            return redirect('/waiter');
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            return redirect('/email/verify');
+        }
+
+        return redirect('/admin');
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -39,6 +51,6 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect('/login');
     }
 }

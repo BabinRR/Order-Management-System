@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\SelectTableRequest;
+use App\Models\DiningTable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -15,6 +16,7 @@ class TableController extends Controller
         return view('customer-home', [
             'table' => session('customer_table'),
             'customerName' => session('customer_name'),
+            'tables' => DiningTable::activeOrdered(),
         ]);
     }
 

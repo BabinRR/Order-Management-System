@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject, MustVerifyEmail
@@ -18,6 +19,8 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     public const ROLE_ADMIN = 'admin';
 
     public const ROLE_WAITER = 'waiter';
+
+    public const DEFAULT_WAITER_PASSWORD = '1234abcd';
 
     /**
      * @var list<string>
@@ -31,6 +34,9 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'avatar_url',
         'avatar_public_id',
         'password',
+        'must_change_password',
+        'password_change_code',
+        'password_change_code_expires_at',
     ];
 
     public function getInitialsAttribute(): string
@@ -48,6 +54,35 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     public function isWaiter(): bool
     {
         return $this->role === self::ROLE_WAITER;
+    }
+
+    public function issuePasswordChangeCode(string $plainCode): void
+    {
+        $this->forceFill([
+            'password_change_code' => Hash::make($plainCode),
+            'password_change_code_expires_at' => now()->addDay(),
+        ])->save();
+    }
+
+    public function clearPasswordChangeCode(): void
+    {
+        $this->forceFill([
+            'password_change_code' => null,
+            'password_change_code_expires_at' => null,
+        ])->save();
+    }
+
+    public function passwordChangeCodeIsValid(?string $plainCode): bool
+    {
+        if ($plainCode === null || $plainCode === '' || blank($this->password_change_code)) {
+            return false;
+        }
+
+        if ($this->password_change_code_expires_at && $this->password_change_code_expires_at->isPast()) {
+            return false;
+        }
+
+        return Hash::check($plainCode, $this->password_change_code);
     }
 
     /**
@@ -79,6 +114,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'password_change_code',
     ];
 
     /**
@@ -89,6 +125,8 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'must_change_password' => 'boolean',
+            'password_change_code_expires_at' => 'datetime',
         ];
     }
 }

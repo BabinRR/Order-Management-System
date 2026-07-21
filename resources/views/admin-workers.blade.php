@@ -8,6 +8,7 @@
         modalOpen: {{ $formErrors ? 'true' : 'false' }},
         editingId: @js(old('worker_id')),
         deleteTarget: null,
+        deleteUrl: '',
         storeUrl: '{{ route('admin.workers.store') }}',
         baseUrl: '{{ url('admin/workers') }}',
         form: {
@@ -33,6 +34,14 @@
             this.form = { name: worker.name, role: worker.role, email: worker.email, phone: worker.phone ?? '', shift: worker.shift, status: worker.status, password: '', password_confirmation: '' };
             this.modalOpen = true;
         },
+        openDelete(worker) {
+            this.deleteTarget = worker;
+            this.deleteUrl = this.baseUrl + '/' + worker.id + '/delete';
+        },
+        closeDelete() {
+            this.deleteTarget = null;
+            this.deleteUrl = '';
+        },
         matches(row) {
             const q = this.search.toLowerCase().trim();
             return !q || row.toLowerCase().includes(q);
@@ -40,6 +49,17 @@
     }"
     class="space-y-5"
 >
+    @if (session('invite_code'))
+        <div class="rounded-2xl border border-amber-400/40 bg-amber-500/10 px-5 py-4">
+            <p class="text-xs font-semibold uppercase tracking-wider text-amber-300">Waiter invite details</p>
+            <p class="mt-2 text-sm text-white/80">Default password: <span class="font-mono font-bold text-white">1234abcd</span></p>
+            <p class="mt-3 text-xs font-semibold uppercase tracking-wider text-amber-300">Gmail change-password code</p>
+            <p class="font-control mt-1 text-3xl font-bold tracking-[0.2em] text-white">{{ session('invite_code') }}</p>
+            <p class="mt-2 text-sm text-white/65">{{ session('status') }}</p>
+            <p class="mt-1 text-xs text-white/45">Waiter signs in with their <strong class="text-white/70">name</strong> + default password, then enters this Gmail code to set a new password.</p>
+        </div>
+    @endif
+
     {{-- Toolbar --}}
     <div class="flex flex-col gap-3 admin-card rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-3">
@@ -128,9 +148,17 @@
                                     >
                                         Edit
                                     </button>
+                                    @if ($worker->isLoginRole() && $worker->user_id)
+                                        <form method="POST" action="{{ route('admin.workers.resend-invite', $worker) }}">
+                                            @csrf
+                                            <button type="submit" class="rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-300 transition hover:bg-sky-500/20">
+                                                Resend code
+                                            </button>
+                                        </form>
+                                    @endif
                                     <button
                                         type="button"
-                                        @click="deleteTarget = @js(['id' => $worker->id, 'name' => $worker->name])"
+                                        @click="openDelete(@js(['id' => $worker->id, 'name' => $worker->name]))"
                                         class="rounded-lg bg-rose-500/15 px-3 py-1.5 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/25"
                                     >
                                         Delete
@@ -219,18 +247,16 @@
                 </div>
 
                 <template x-if="needsLogin">
-                    <div class="space-y-4 rounded-xl border border-white/10 bg-[#0f0f0f]/70 p-4">
+                    <div class="space-y-2 rounded-xl border border-white/10 bg-[#0f0f0f]/70 p-4">
                         <p class="text-xs font-semibold uppercase tracking-wider text-rose-400">Waiter login account</p>
-                        <p class="text-xs text-white/50">Creates a login for this staff member and sends an email verification link.</p>
-                        <div>
-                            <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">Password</label>
-                            <input x-model="form.password" name="password" type="password" autocomplete="new-password" @class(['w-full rounded-xl border bg-[#0f0f0f] px-3 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-rose-500/25', 'border-rose-500' => $errors->has('password'), 'border-white/15 focus:border-rose-500' => ! $errors->has('password')])>
-                            @error('password') <p class="mt-1 text-xs font-medium text-rose-400">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">Confirm password</label>
-                            <input x-model="form.password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" class="w-full rounded-xl border border-white/15 bg-[#0f0f0f] px-3 py-2.5 text-sm text-white outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/25">
-                        </div>
+                        <p class="text-xs leading-relaxed text-white/55">
+                            Creates a login with default password <span class="font-mono text-white/80">1234abcd</span>.
+                            A verification code is emailed to their Gmail — required when they change password after first login.
+                            They sign in with their <span class="text-white/80">name</span>.
+                        </p>
+                        <p class="text-xs text-white/40" x-show="editingId">
+                            Already has an account? Use <span class="text-white/70">Resend code</span> to reset to the default password and send a new Gmail code.
+                        </p>
                     </div>
                 </template>
 
@@ -249,7 +275,7 @@
         x-transition.opacity
         class="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
     >
-        <div @click.outside="deleteTarget = null" class="modal-enter w-full max-w-md admin-card rounded-2xl p-6 shadow-2xl text-white">
+        <div @click.outside="closeDelete()" class="modal-enter w-full max-w-md admin-card rounded-2xl p-6 shadow-2xl text-white">
             <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-400">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </div>
@@ -257,10 +283,9 @@
             <p class="mt-2 text-sm text-white/60">
                 Remove <span class="font-semibold text-white" x-text="deleteTarget?.name"></span> from the staff list? This can’t be undone.
             </p>
-            <form :action="baseUrl + '/' + deleteTarget?.id" method="POST" class="mt-5 flex justify-end gap-2">
+            <form :action="deleteUrl" method="POST" class="mt-5 flex justify-end gap-2">
                 @csrf
-                @method('DELETE')
-                <button type="button" @click="deleteTarget = null" class="rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/60 transition hover:bg-white/10">Cancel</button>
+                <button type="button" @click="closeDelete()" class="rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/60 transition hover:bg-white/10">Cancel</button>
                 <button type="submit" class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700">Delete</button>
             </form>
         </div>

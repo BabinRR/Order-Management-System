@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureCustomerHasTable;
+use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,21 +18,26 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
             'customer.table' => EnsureCustomerHasTable::class,
+            'password.changed' => EnsurePasswordIsChanged::class,
         ]);
 
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo(function (): string {
             $user = auth()->user();
 
-            if ($user && ! $user->hasVerifiedEmail()) {
-                return route('verification.notice');
+            if ($user?->must_change_password) {
+                return '/password/change';
             }
 
             if ($user?->isWaiter()) {
-                return route('waiter.dashboard');
+                return '/waiter';
             }
 
-            return route('admin.dashboard');
+            if ($user && ! $user->hasVerifiedEmail()) {
+                return '/email/verify';
+            }
+
+            return '/admin';
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {

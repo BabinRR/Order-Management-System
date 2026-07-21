@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class StoreWorkerRequest extends FormRequest
 {
@@ -18,8 +17,6 @@ class StoreWorkerRequest extends FormRequest
      */
     public function rules(): array
     {
-        $loginRole = in_array($this->input('role'), ['Waiter', 'Waitress'], true);
-
         return [
             'name' => ['required', 'string', 'max:255'],
             'role' => ['required', 'string', 'max:255'],
@@ -33,7 +30,6 @@ class StoreWorkerRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'shift' => ['required', Rule::in(['Morning', 'Evening', 'Night'])],
             'status' => ['required', Rule::in(['Active', 'On Leave', 'Inactive'])],
-            'password' => [$loginRole ? 'required' : 'nullable', 'confirmed', Password::defaults()],
         ];
     }
 }

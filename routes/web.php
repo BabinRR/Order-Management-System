@@ -1,12 +1,16 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FloorController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\WorkerController;
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\ForcePasswordChangeController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Customer\BillController as CustomerBillController;
 use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Customer\MenuController as CustomerMenuController;
@@ -21,21 +25,34 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     if (Auth::check()) {
-        if (! Auth::user()->hasVerifiedEmail()) {
-            return redirect()->route('verification.notice');
+        $user = Auth::user();
+
+        if ($user->must_change_password) {
+            return redirect('/password/change');
         }
 
-        return Auth::user()->isWaiter()
-            ? redirect()->route('waiter.dashboard')
-            : redirect()->route('admin.dashboard');
+        if ($user->isWaiter()) {
+            return redirect('/waiter');
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            return redirect('/email/verify');
+        }
+
+        return redirect('/admin');
     }
 
-    return redirect()->route('customer.home');
+    return redirect('/order');
 });
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store']);
+
+    Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+    Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
 });
 
 Route::post('/logout', [LoginController::class, 'destroy'])
@@ -50,6 +67,9 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/email/verification-notification', [EmailVerificationController::class, 'send'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
+
+    Route::get('/password/change', [ForcePasswordChangeController::class, 'edit'])->name('password.force.edit');
+    Route::put('/password/change', [ForcePasswordChangeController::class, 'update'])->name('password.force.update');
 });
 
 Route::prefix('order')->name('customer.')->group(function (): void {
@@ -74,9 +94,14 @@ Route::prefix('order')->name('customer.')->group(function (): void {
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:admin'])->group(function (): void {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::put('/floor', [FloorController::class, 'update'])->name('floor.update');
+    Route::post('/floor/tables', [FloorController::class, 'store'])->name('floor.tables.store');
 
     Route::resource('workers', WorkerController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::post('/workers/{worker}/delete', [WorkerController::class, 'destroy'])->name('workers.delete');
+    Route::post('/workers/{worker}/resend-invite', [WorkerController::class, 'resendInvite'])->name('workers.resend-invite');
     Route::resource('menu', MenuController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::post('/menu/{menu}/delete', [MenuController::class, 'destroy'])->name('menu.delete');
 
     Route::patch('/orders/{order}/preparing', [AdminOrderController::class, 'markPreparing'])->name('orders.preparing');
     Route::patch('/orders/{order}/served', [AdminOrderController::class, 'markServed'])->name('orders.served');
@@ -86,7 +111,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:ad
     Route::put('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.password');
 });
 
-Route::prefix('waiter')->name('waiter.')->middleware(['auth', 'verified', 'role:waiter'])->group(function (): void {
+Route::prefix('waiter')->name('waiter.')->middleware(['auth', 'role:waiter', 'password.changed'])->group(function (): void {
     Route::get('/', [WaiterDashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/orders', [WaiterOrderController::class, 'index'])->name('orders.index');

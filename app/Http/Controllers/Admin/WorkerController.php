@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreWorkerRequest;
 use App\Http\Requests\UpdateWorkerRequest;
+use App\Mail\WaiterInviteMail;
 use App\Models\User;
 use App\Models\Worker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
+use Throwable;
 
 class WorkerController extends Controller
 {
@@ -41,47 +44,51 @@ class WorkerController extends Controller
 
     public function store(StoreWorkerRequest $request): RedirectResponse
     {
-        $data = $request->safe()->except(['password', 'password_confirmation']);
-        $password = $request->validated('password');
-
+        $data = $request->validated();
         $message = 'Worker added successfully.';
+        $inviteCode = null;
 
-        DB::transaction(function () use ($data, $password, &$message): void {
+        DB::transaction(function () use ($data, &$message, &$inviteCode): void {
             $worker = Worker::create($data);
 
             if ($worker->isLoginRole()) {
-                $user = $this->syncWaiterUser($worker, $password);
+                [$user, $code] = $this->provisionWaiterAccount($worker);
                 $worker->update(['user_id' => $user->id]);
-                $user->sendEmailVerificationNotification();
-                $message = 'Waiter account created — verification email sent.';
+                $inviteCode = $code;
+                $message = $this->sendInvite($user, $code);
             }
         });
 
-        return redirect()->route('admin.workers.index')->with('status', $message);
+        return redirect()
+            ->route('admin.workers.index')
+            ->with('status', $message)
+            ->with('invite_code', $inviteCode);
     }
 
     public function update(UpdateWorkerRequest $request, Worker $worker): RedirectResponse
     {
-        $data = $request->safe()->except(['password', 'password_confirmation']);
-        $password = $request->validated('password');
+        $data = $request->validated();
         $wasLoginRole = $worker->isLoginRole();
         $message = 'Worker updated successfully.';
+        $inviteCode = null;
 
-        DB::transaction(function () use ($worker, $data, $password, $wasLoginRole, &$message): void {
+        DB::transaction(function () use ($worker, $data, $wasLoginRole, &$message, &$inviteCode): void {
             $hadAccount = (bool) $worker->user_id;
-            $previousEmail = $worker->user?->email;
 
             $worker->update($data);
             $worker->refresh();
 
             if ($worker->isLoginRole()) {
-                $user = $this->syncWaiterUser($worker, $password);
-                if ($worker->user_id !== $user->id) {
+                if (! $wasLoginRole || ! $hadAccount) {
+                    [$user, $code] = $this->provisionWaiterAccount($worker);
                     $worker->update(['user_id' => $user->id]);
-                }
-                if (! $wasLoginRole || ! $hadAccount || $previousEmail !== $worker->email) {
-                    $user->sendEmailVerificationNotification();
-                    $message = 'Waiter account created — verification email sent.';
+                    $inviteCode = $code;
+                    $message = $this->sendInvite($user, $code);
+                } else {
+                    $user = $this->syncWaiterProfile($worker);
+                    if ($worker->user_id !== $user->id) {
+                        $worker->update(['user_id' => $user->id]);
+                    }
                 }
             } elseif ($wasLoginRole && $worker->user_id) {
                 $linked = User::query()->whereKey($worker->user_id)->where('role', User::ROLE_WAITER)->first();
@@ -90,7 +97,33 @@ class WorkerController extends Controller
             }
         });
 
-        return redirect()->route('admin.workers.index')->with('status', $message);
+        return redirect()
+            ->route('admin.workers.index')
+            ->with('status', $message)
+            ->with('invite_code', $inviteCode);
+    }
+
+    public function resendInvite(Worker $worker): RedirectResponse
+    {
+        if (! $worker->isLoginRole() || ! $worker->user_id) {
+            return back()->withErrors(['worker' => 'This worker does not have a waiter login.']);
+        }
+
+        $user = $worker->user;
+        $code = $this->generateChangeCode();
+
+        $user->update([
+            'password' => User::DEFAULT_WAITER_PASSWORD,
+            'must_change_password' => true,
+            'email_verified_at' => $user->email_verified_at ?? now(),
+        ]);
+        $user->issuePasswordChangeCode($code);
+
+        $message = $this->sendInvite($user->fresh(), $code);
+
+        return back()
+            ->with('status', $message)
+            ->with('invite_code', $code);
     }
 
     public function destroy(Worker $worker): RedirectResponse
@@ -110,26 +143,43 @@ class WorkerController extends Controller
         return redirect()->route('admin.workers.index')->with('status', 'Worker deleted successfully.');
     }
 
-    private function syncWaiterUser(Worker $worker, ?string $password): User
+    /**
+     * @return array{0: User, 1: string}
+     */
+    private function provisionWaiterAccount(Worker $worker): array
     {
+        $code = $this->generateChangeCode();
+
         $user = $worker->user
             ?? User::query()->where('email', $worker->email)->first();
 
-        if (! $user) {
-            $user = User::query()->create([
-                'name' => $worker->name,
-                'email' => $worker->email,
-                'phone' => $worker->phone,
-                'title' => $worker->role,
-                'role' => User::ROLE_WAITER,
-                'password' => $password,
-                'email_verified_at' => null,
-            ]);
+        $attributes = [
+            'name' => $worker->name,
+            'email' => $worker->email,
+            'phone' => $worker->phone,
+            'title' => $worker->role,
+            'role' => User::ROLE_WAITER,
+            'password' => User::DEFAULT_WAITER_PASSWORD,
+            'must_change_password' => true,
+            'email_verified_at' => now(),
+        ];
 
-            return $user;
+        if (! $user) {
+            $user = User::query()->create($attributes);
+        } else {
+            $user->fill($attributes);
+            $user->save();
         }
 
-        $emailChanged = $user->email !== $worker->email;
+        $user->issuePasswordChangeCode($code);
+
+        return [$user->fresh(), $code];
+    }
+
+    private function syncWaiterProfile(Worker $worker): User
+    {
+        $user = $worker->user
+            ?? User::query()->where('email', $worker->email)->firstOrFail();
 
         $user->fill([
             'name' => $worker->name,
@@ -138,17 +188,37 @@ class WorkerController extends Controller
             'title' => $worker->role,
             'role' => User::ROLE_WAITER,
         ]);
-
-        if ($emailChanged) {
-            $user->email_verified_at = null;
-        }
-
-        if ($password) {
-            $user->password = $password;
-        }
-
         $user->save();
 
         return $user->fresh();
+    }
+
+    private function generateChangeCode(): string
+    {
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+        return collect(range(1, 8))
+            ->map(fn () => $alphabet[random_int(0, strlen($alphabet) - 1)])
+            ->implode('');
+    }
+
+    private function sendInvite(User $user, string $code): string
+    {
+        $defaultPassword = User::DEFAULT_WAITER_PASSWORD;
+        $smtpPassword = (string) config('mail.mailers.smtp.password');
+
+        if (config('mail.default') === 'smtp' && $smtpPassword === '') {
+            return "Waiter ready. Login name: {$user->name}, password: {$defaultPassword}. Email code (Gmail not configured): {$code}";
+        }
+
+        try {
+            Mail::to($user->email)->send(new WaiterInviteMail($user, $code, $defaultPassword));
+
+            return "Invite emailed to {$user->email}. Default password: {$defaultPassword}. Change-password code: {$code}";
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return "Email failed. Login name: {$user->name}, password: {$defaultPassword}, change-password code: {$code}";
+        }
     }
 }

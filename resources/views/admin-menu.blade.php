@@ -9,6 +9,7 @@
         modalOpen: {{ $formErrors ? 'true' : 'false' }},
         editingId: @js(old('menu_id')),
         deleteTarget: null,
+        deleteUrl: '',
         storeUrl: '{{ route('admin.menu.store') }}',
         baseUrl: '{{ url('admin/menu') }}',
         form: {
@@ -27,6 +28,14 @@
             this.editingId = item.id;
             this.form = { name: item.name, category: item.category, price: item.price, description: item.description ?? '', status: item.status };
             this.modalOpen = true;
+        },
+        openDelete(item) {
+            this.deleteTarget = item;
+            this.deleteUrl = this.baseUrl + '/' + item.id + '/delete';
+        },
+        closeDelete() {
+            this.deleteTarget = null;
+            this.deleteUrl = '';
         },
         matches(name, category, description, itemCategory) {
             const q = this.search.toLowerCase().trim();
@@ -120,7 +129,7 @@
                         </button>
                         <button
                             type="button"
-                            @click="deleteTarget = @js(['id' => $item->id, 'name' => $item->name])"
+                            @click="openDelete(@js(['id' => $item->id, 'name' => $item->name]))"
                             class="rounded-lg bg-rose-500/15 px-3 py-1.5 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/25"
                         >
                             Delete
@@ -218,7 +227,7 @@
         x-transition.opacity
         class="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
     >
-        <div @click.outside="deleteTarget = null" class="modal-enter w-full max-w-md admin-card rounded-2xl p-6 shadow-2xl text-white">
+        <div @click.outside="closeDelete()" class="modal-enter w-full max-w-md admin-card rounded-2xl p-6 shadow-2xl text-white">
             <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-400">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </div>
@@ -226,10 +235,9 @@
             <p class="mt-2 text-sm text-white/60">
                 Remove <span class="font-semibold text-white" x-text="deleteTarget?.name"></span> from the menu? This can’t be undone.
             </p>
-            <form :action="baseUrl + '/' + deleteTarget?.id" method="POST" class="mt-5 flex justify-end gap-2">
+            <form :action="deleteUrl" method="POST" class="mt-5 flex justify-end gap-2">
                 @csrf
-                @method('DELETE')
-                <button type="button" @click="deleteTarget = null" class="rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/60 transition hover:bg-white/10">Cancel</button>
+                <button type="button" @click="closeDelete()" class="rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/60 transition hover:bg-white/10">Cancel</button>
                 <button type="submit" class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700">Delete</button>
             </form>
         </div>
