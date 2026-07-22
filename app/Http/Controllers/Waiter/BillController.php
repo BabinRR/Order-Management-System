@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Waiter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Waiter\CollectPaymentRequest;
 use App\Models\Order;
+use App\Models\Payment;
+use App\Services\KhaltiPaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use RuntimeException;
+use Symfony\Component\HttpFoundation\Response;
 
 class BillController extends Controller
 {
@@ -88,16 +92,19 @@ class BillController extends Controller
             'orders' => $orders,
             'unpaidOrders' => $unpaid,
             'unpaidTotal' => (int) $unpaid->sum('total'),
-            'methods' => ['cash', 'online'],
+            'methods' => [
+                'cash' => 'Cash',
+                'online' => 'Online · Khalti',
+            ],
         ]);
     }
 
-    public function collect(CollectPaymentRequest $request, Order $order): RedirectResponse
+    public function collect(CollectPaymentRequest $request, Order $order, KhaltiPaymentService $khalti): RedirectResponse|Response
     {
-        return $this->collectTable($request, (string) $order->table_number);
+        return $this->collectTable($request, (string) $order->table_number, $khalti);
     }
 
-    public function collectTable(CollectPaymentRequest $request, string $table): RedirectResponse
+    public function collectTable(CollectPaymentRequest $request, string $table, KhaltiPaymentService $khalti): RedirectResponse|Response
     {
         $unpaid = Order::query()
             ->where('table_number', $table)
@@ -111,6 +118,25 @@ class BillController extends Controller
         }
 
         $method = $request->validated('payment_method');
+
+        if ($method === 'online') {
+            try {
+                $payment = $khalti->initiateForOrders(
+                    orders: $unpaid,
+                    tableNumber: $table,
+                    source: Payment::SOURCE_WAITER,
+                    returnUrl: route('payments.khalti.callback'),
+                    user: $request->user(),
+                    customerName: 'Table '.$table,
+                );
+            } catch (RuntimeException $exception) {
+                return redirect()
+                    ->route('waiter.bills.table', $table)
+                    ->withErrors(['payment' => $exception->getMessage()]);
+            }
+
+            return redirect()->away($payment->payment_url);
+        }
 
         DB::transaction(function () use ($unpaid, $method, $request): void {
             foreach ($unpaid as $order) {

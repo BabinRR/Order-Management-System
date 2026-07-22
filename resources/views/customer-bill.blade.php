@@ -55,16 +55,18 @@
                         <div>
                             <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Pay with</p>
                             <div class="grid grid-cols-2 gap-2">
-                                @foreach ($methods as $method)
+                                @foreach ($methods as $value => $label)
                                     <label class="cursor-pointer">
-                                        <input type="radio" name="payment_method" value="{{ $method }}" class="peer sr-only" @checked(old('payment_method', 'cash') === $method) required>
-                                        <span class="flex items-center justify-center rounded-full border border-[#e0d8cc] bg-[#f9f7f2] px-3 py-3 text-sm font-semibold capitalize text-ink-soft transition peer-checked:border-[#3e2723] peer-checked:bg-[#3e2723] peer-checked:text-white">
-                                            {{ $method }}
+                                        <input type="radio" name="payment_method" value="{{ $value }}" class="peer sr-only" @checked(old('payment_method', 'cash') === $value) required>
+                                        <span class="flex items-center justify-center rounded-full border border-[#e0d8cc] bg-[#f9f7f2] px-3 py-3 text-sm font-semibold text-ink-soft transition peer-checked:border-[#3e2723] peer-checked:bg-[#3e2723] peer-checked:text-white">
+                                            {{ $label }}
                                         </span>
                                     </label>
                                 @endforeach
                             </div>
                             @error('payment_method') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
+                            @error('payment') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
+                            <p class="mt-2 text-[11px] text-ink-soft/50">Online opens Khalti sandbox checkout. Test ID <span class="font-semibold">9800000000</span> · MPIN <span class="font-semibold">1111</span> · OTP <span class="font-semibold">987654</span>.</p>
                         </div>
                         <button type="submit" class="w-full rounded-full bg-[#3e2723] px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5d4037]">
                             Complete payment · Rs {{ number_format($unpaidTotal) }}

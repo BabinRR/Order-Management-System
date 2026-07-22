@@ -63,16 +63,18 @@
                     <div>
                         <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-soft/55">Payment method</p>
                         <div class="grid grid-cols-2 gap-2">
-                            @foreach ($methods as $method)
+                            @foreach ($methods as $value => $label)
                                 <label class="cursor-pointer">
-                                    <input type="radio" name="payment_method" value="{{ $method }}" class="peer sr-only" @checked(old('payment_method', 'cash') === $method) required>
-                                    <span class="flex items-center justify-center rounded-xl border border-[#d9cbb8] bg-white px-3 py-3 text-sm font-semibold capitalize text-ink-soft transition peer-checked:border-[#8b5e3c] peer-checked:bg-[#8b5e3c] peer-checked:text-white">
-                                        {{ $method }}
+                                    <input type="radio" name="payment_method" value="{{ $value }}" class="peer sr-only" @checked(old('payment_method', 'cash') === $value) required>
+                                    <span class="flex items-center justify-center rounded-xl border border-[#d9cbb8] bg-white px-3 py-3 text-sm font-semibold text-ink-soft transition peer-checked:border-[#8b5e3c] peer-checked:bg-[#8b5e3c] peer-checked:text-white">
+                                        {{ $label }}
                                     </span>
                                 </label>
                             @endforeach
                         </div>
                         @error('payment_method') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
+                        @error('payment') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
+                        <p class="mt-2 text-[11px] text-ink-soft/50">Online uses Khalti sandbox. Test ID 9800000000 · MPIN 1111 · OTP 987654.</p>
                     </div>
 
                     <button type="submit" class="w-full rounded-xl bg-gradient-to-br from-[#8b5e3c] to-[#5d4037] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95">
