@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AdjustSalaryRequest;
 use App\Http\Requests\StoreWorkerRequest;
 use App\Http\Requests\UpdateWorkerRequest;
 use App\Mail\WaiterInviteMail;
@@ -124,6 +125,32 @@ class WorkerController extends Controller
         return back()
             ->with('status', $message)
             ->with('invite_code', $code);
+    }
+
+    public function adjustSalary(AdjustSalaryRequest $request, Worker $worker): RedirectResponse
+    {
+        $action = $request->validated('action');
+        $amount = (int) $request->validated('amount');
+        $previous = (int) $worker->salary;
+
+        $newSalary = match ($action) {
+            'set' => $amount,
+            'increase' => $previous + $amount,
+            'decrease' => max(0, $previous - $amount),
+        };
+
+        $worker->update(['salary' => $newSalary]);
+
+        $label = match ($action) {
+            'set' => 'set to',
+            'increase' => 'increased to',
+            'decrease' => 'decreased to',
+        };
+
+        return back()->with(
+            'status',
+            "{$worker->name}'s salary {$label} Rs ".number_format($newSalary).' (was Rs '.number_format($previous).').'
+        );
     }
 
     public function destroy(Worker $worker): RedirectResponse

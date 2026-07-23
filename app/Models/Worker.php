@@ -21,7 +21,18 @@ class Worker extends Model
         'phone',
         'shift',
         'status',
+        'salary',
     ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'salary' => 'integer',
+        ];
+    }
 
     public function isLoginRole(): bool
     {
@@ -42,6 +53,22 @@ class Worker extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    /**
+     * @return HasMany<Attendance, $this>
+     */
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function adjustSalary(int $delta): int
+    {
+        $newSalary = max(0, $this->salary + $delta);
+        $this->update(['salary' => $newSalary]);
+
+        return $newSalary;
     }
 
     public function getInitialsAttribute(): string

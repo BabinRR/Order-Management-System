@@ -110,6 +110,7 @@
         $nav = [
             ['route' => 'admin.dashboard', 'label' => 'Floor', 'match' => 'admin.dashboard'],
             ['route' => 'admin.workers.index', 'label' => 'Workers', 'match' => 'admin.workers.*'],
+            ['route' => 'admin.attendance.index', 'label' => 'Attendance', 'match' => 'admin.attendance.*'],
             ['route' => 'admin.menu.index', 'label' => 'Menu', 'match' => 'admin.menu.*'],
             ['route' => 'admin.profile.edit', 'label' => 'Profile', 'match' => 'admin.profile.*'],
         ];

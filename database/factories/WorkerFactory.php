@@ -24,6 +24,14 @@ class WorkerFactory extends Factory
             'phone' => fake()->numerify('+977 98#-###-####'),
             'shift' => fake()->randomElement(['Morning', 'Evening', 'Night']),
             'status' => fake()->randomElement(['Active', 'Active', 'Active', 'On Leave', 'Inactive']),
+            'salary' => fake()->numberBetween(15000, 45000),
         ];
+    }
+
+    public function waiter(): static
+    {
+        return $this->state(fn () => [
+            'role' => 'Waiter',
+        ]);
     }
 }

@@ -30,6 +30,7 @@ class StoreWorkerRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'shift' => ['required', Rule::in(['Morning', 'Evening', 'Night'])],
             'status' => ['required', Rule::in(['Active', 'On Leave', 'Inactive'])],
+            'salary' => ['required', 'integer', 'min:0', 'max:10000000'],
         ];
     }
 }

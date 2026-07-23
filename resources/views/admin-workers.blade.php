@@ -18,21 +18,33 @@
             phone: @js(old('phone', '')),
             shift: @js(old('shift', $shifts[0])),
             status: @js(old('status', $statuses[0])),
+            salary: @js((int) old('salary', 20000)),
             password: '',
             password_confirmation: '',
         },
+        salaryTarget: null,
+        salaryAction: 'increase',
+        salaryAmount: 1000,
         get needsLogin() {
             return ['Waiter', 'Waitress'].includes(this.form.role);
         },
         openCreate() {
             this.editingId = null;
-            this.form = { name: '', role: @js($roles[0]), email: '', phone: '', shift: @js($shifts[0]), status: @js($statuses[0]), password: '', password_confirmation: '' };
+            this.form = { name: '', role: @js($roles[0]), email: '', phone: '', shift: @js($shifts[0]), status: @js($statuses[0]), salary: 20000, password: '', password_confirmation: '' };
             this.modalOpen = true;
         },
         openEdit(worker) {
             this.editingId = worker.id;
-            this.form = { name: worker.name, role: worker.role, email: worker.email, phone: worker.phone ?? '', shift: worker.shift, status: worker.status, password: '', password_confirmation: '' };
+            this.form = { name: worker.name, role: worker.role, email: worker.email, phone: worker.phone ?? '', shift: worker.shift, status: worker.status, salary: worker.salary ?? 0, password: '', password_confirmation: '' };
             this.modalOpen = true;
+        },
+        openSalary(worker) {
+            this.salaryTarget = worker;
+            this.salaryAction = 'increase';
+            this.salaryAmount = 1000;
+        },
+        closeSalary() {
+            this.salaryTarget = null;
         },
         openDelete(worker) {
             this.deleteTarget = worker;
@@ -93,6 +105,7 @@
                         <th class="px-5 py-3.5 font-semibold sm:px-6">Worker</th>
                         <th class="px-5 py-3.5 font-semibold sm:px-6">Role</th>
                         <th class="px-5 py-3.5 font-semibold sm:px-6">Shift</th>
+                        <th class="px-5 py-3.5 font-semibold sm:px-6">Salary</th>
                         <th class="px-5 py-3.5 font-semibold sm:px-6">Status</th>
                         <th class="px-5 py-3.5 text-right font-semibold sm:px-6">Actions</th>
                     </tr>
@@ -119,6 +132,20 @@
                                 <span class="inline-flex rounded-md bg-white/10 px-2 py-0.5 text-xs font-medium text-white/60">{{ $worker->shift }}</span>
                             </td>
                             <td class="px-5 py-3.5 sm:px-6">
+                                <p class="font-semibold text-white">Rs {{ number_format($worker->salary) }}</p>
+                                <button
+                                    type="button"
+                                    @click="openSalary(@js([
+                                        'id' => $worker->id,
+                                        'name' => $worker->name,
+                                        'salary' => $worker->salary,
+                                    ]))"
+                                    class="mt-1 text-[11px] font-semibold text-sky-300 hover:underline"
+                                >
+                                    Adjust
+                                </button>
+                            </td>
+                            <td class="px-5 py-3.5 sm:px-6">
                                 @php
                                     $statusClass = match ($worker->status) {
                                         'Active' => 'bg-emerald-500/15 text-emerald-400',
@@ -143,6 +170,7 @@
                                             'phone' => $worker->phone,
                                             'shift' => $worker->shift,
                                             'status' => $worker->status,
+                                            'salary' => $worker->salary,
                                         ]))"
                                         class="rounded-lg admin-card px-3 py-1.5 text-xs font-semibold text-white transition hover:border-rose-500 hover:text-rose-400"
                                     >
@@ -168,7 +196,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-16 text-center text-sm text-white/45">No workers yet. Add your first team member.</td>
+                            <td colspan="6" class="px-6 py-16 text-center text-sm text-white/45">No workers yet. Add your first team member.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -246,6 +274,12 @@
                     </div>
                 </div>
 
+                <div>
+                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">Monthly salary (Rs)</label>
+                    <input x-model="form.salary" name="salary" type="number" min="0" step="100" @class(['w-full rounded-xl border bg-[#0f0f0f] px-3 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-rose-500/25', 'border-rose-500' => $errors->has('salary'), 'border-white/15 focus:border-rose-500' => ! $errors->has('salary')])>
+                    @error('salary') <p class="mt-1 text-xs font-medium text-rose-400">{{ $message }}</p> @enderror
+                </div>
+
                 <template x-if="needsLogin">
                     <div class="space-y-2 rounded-xl border border-white/10 bg-[#0f0f0f]/70 p-4">
                         <p class="text-xs font-semibold uppercase tracking-wider text-rose-400">Waiter login account</p>
@@ -263,6 +297,44 @@
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" @click="modalOpen = false" class="rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/60 transition hover:bg-white/10">Cancel</button>
                     <button type="submit" class="rounded-xl bg-gradient-to-br from-rose-600 to-rose-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95" x-text="editingId ? 'Save changes' : 'Add worker'"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Salary adjust --}}
+    <div
+        x-show="salaryTarget"
+        x-cloak
+        x-transition.opacity
+        class="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
+    >
+        <div @click.outside="closeSalary()" class="modal-enter w-full max-w-md admin-card rounded-2xl p-6 shadow-2xl text-white">
+            <h2 class="font-control text-xl font-extrabold text-white">Adjust salary</h2>
+            <p class="mt-2 text-sm text-white/60">
+                <span class="font-semibold text-white" x-text="salaryTarget?.name"></span>
+                · current <span class="text-white" x-text="'Rs ' + Number(salaryTarget?.salary || 0).toLocaleString()"></span>
+            </p>
+            <form :action="baseUrl + '/' + salaryTarget?.id + '/salary'" method="POST" class="mt-5 space-y-4">
+                @csrf
+                <div>
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-white/45">Action</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <template x-for="action in ['increase', 'decrease', 'set']" :key="action">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="action" :value="action" class="peer sr-only" x-model="salaryAction" required>
+                                <span class="flex items-center justify-center rounded-xl border border-white/15 px-2 py-2 text-xs font-semibold capitalize text-white/60 transition peer-checked:border-rose-500 peer-checked:bg-rose-600 peer-checked:text-white" x-text="action"></span>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">Amount (Rs)</label>
+                    <input type="number" name="amount" min="1" x-model="salaryAmount" required class="w-full rounded-xl border border-white/15 bg-[#0f0f0f] px-3 py-2.5 text-sm text-white outline-none focus:border-rose-500">
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" @click="closeSalary()" class="rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/60 transition hover:bg-white/10">Cancel</button>
+                    <button type="submit" class="rounded-xl bg-gradient-to-br from-rose-600 to-rose-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95">Apply</button>
                 </div>
             </form>
         </div>

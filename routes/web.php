@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FloorController;
 use App\Http\Controllers\Admin\MenuController;
@@ -104,6 +105,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:ad
     Route::resource('workers', WorkerController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::post('/workers/{worker}/delete', [WorkerController::class, 'destroy'])->name('workers.delete');
     Route::post('/workers/{worker}/resend-invite', [WorkerController::class, 'resendInvite'])->name('workers.resend-invite');
+    Route::post('/workers/{worker}/salary', [WorkerController::class, 'adjustSalary'])->name('workers.salary');
+
+    Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+
     Route::resource('menu', MenuController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::post('/menu/{menu}/delete', [MenuController::class, 'destroy'])->name('menu.delete');
 
