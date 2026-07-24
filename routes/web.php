@@ -17,7 +17,7 @@ use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Customer\MenuController as CustomerMenuController;
 use App\Http\Controllers\Customer\OrderController as CustomerOrderController;
 use App\Http\Controllers\Customer\TableController;
-use App\Http\Controllers\Payment\KhaltiCallbackController;
+use App\Http\Controllers\Payment\EsewaCallbackController;
 use App\Http\Controllers\Waiter\BillController;
 use App\Http\Controllers\Waiter\DashboardController as WaiterDashboardController;
 use App\Http\Controllers\Waiter\OrderController as WaiterOrderController;
@@ -74,8 +74,10 @@ Route::middleware('auth')->group(function (): void {
     Route::put('/password/change', [ForcePasswordChangeController::class, 'update'])->name('password.force.update');
 });
 
-Route::get('/payments/khalti/callback', KhaltiCallbackController::class)
-    ->name('payments.khalti.callback');
+Route::get('/payments/esewa/success', [EsewaCallbackController::class, 'success'])
+    ->name('payments.esewa.success');
+Route::get('/payments/esewa/failure', [EsewaCallbackController::class, 'failure'])
+    ->name('payments.esewa.failure');
 
 Route::prefix('order')->name('customer.')->group(function (): void {
     Route::get('/', [TableController::class, 'home'])->name('home');

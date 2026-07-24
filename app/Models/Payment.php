@@ -24,21 +24,19 @@ class Payment extends Model
 
     public const SOURCE_WAITER = 'waiter';
 
-    public const GATEWAY_KHALTI = 'khalti';
+    public const GATEWAY_ESEWA = 'esewa';
 
     protected $fillable = [
-        'purchase_order_id',
-        'pidx',
+        'transaction_uuid',
         'table_number',
         'amount',
-        'amount_paisa',
         'status',
         'gateway',
         'source',
         'order_ids',
-        'transaction_id',
+        'transaction_code',
+        'ref_id',
         'user_id',
-        'payment_url',
         'completed_at',
     ];
 
@@ -49,7 +47,6 @@ class Payment extends Model
     {
         return [
             'amount' => 'integer',
-            'amount_paisa' => 'integer',
             'order_ids' => 'array',
             'completed_at' => 'datetime',
         ];

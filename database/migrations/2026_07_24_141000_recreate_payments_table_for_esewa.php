@@ -8,6 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
+        Schema::dropIfExists('payments');
+
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->string('transaction_uuid')->unique();

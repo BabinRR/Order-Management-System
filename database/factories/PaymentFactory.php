@@ -21,18 +21,16 @@ class PaymentFactory extends Factory
         $amount = fake()->numberBetween(100, 2000);
 
         return [
-            'purchase_order_id' => 'OE-'.now()->format('YmdHis').'-'.Str::upper(Str::random(6)),
-            'pidx' => Str::random(22),
+            'transaction_uuid' => 'OE-'.now()->format('YmdHis').'-'.Str::upper(Str::random(6)),
             'table_number' => (string) fake()->numberBetween(1, 12),
             'amount' => $amount,
-            'amount_paisa' => $amount * 100,
             'status' => Payment::STATUS_PENDING,
-            'gateway' => Payment::GATEWAY_KHALTI,
+            'gateway' => Payment::GATEWAY_ESEWA,
             'source' => Payment::SOURCE_CUSTOMER,
             'order_ids' => [],
-            'transaction_id' => null,
+            'transaction_code' => null,
+            'ref_id' => null,
             'user_id' => null,
-            'payment_url' => 'https://test-pay.khalti.com/?pidx='.Str::random(12),
             'completed_at' => null,
         ];
     }

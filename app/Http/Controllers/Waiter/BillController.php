@@ -6,14 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Waiter\CollectPaymentRequest;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Services\KhaltiPaymentService;
+use App\Services\EsewaPaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\Response;
 
 class BillController extends Controller
 {
@@ -94,17 +93,17 @@ class BillController extends Controller
             'unpaidTotal' => (int) $unpaid->sum('total'),
             'methods' => [
                 'cash' => 'Cash',
-                'online' => 'Online · Khalti',
+                'online' => 'Online · eSewa',
             ],
         ]);
     }
 
-    public function collect(CollectPaymentRequest $request, Order $order, KhaltiPaymentService $khalti): RedirectResponse|Response
+    public function collect(CollectPaymentRequest $request, Order $order, EsewaPaymentService $esewa): RedirectResponse|View
     {
-        return $this->collectTable($request, (string) $order->table_number, $khalti);
+        return $this->collectTable($request, (string) $order->table_number, $esewa);
     }
 
-    public function collectTable(CollectPaymentRequest $request, string $table, KhaltiPaymentService $khalti): RedirectResponse|Response
+    public function collectTable(CollectPaymentRequest $request, string $table, EsewaPaymentService $esewa): RedirectResponse|View
     {
         $unpaid = Order::query()
             ->where('table_number', $table)
@@ -121,13 +120,11 @@ class BillController extends Controller
 
         if ($method === 'online') {
             try {
-                $payment = $khalti->initiateForOrders(
+                $initiated = $esewa->initiateForOrders(
                     orders: $unpaid,
                     tableNumber: $table,
                     source: Payment::SOURCE_WAITER,
-                    returnUrl: route('payments.khalti.callback'),
                     user: $request->user(),
-                    customerName: 'Table '.$table,
                 );
             } catch (RuntimeException $exception) {
                 return redirect()
@@ -135,7 +132,11 @@ class BillController extends Controller
                     ->withErrors(['payment' => $exception->getMessage()]);
             }
 
-            return redirect()->away($payment->payment_url);
+            return view('payments.esewa-redirect', [
+                'formUrl' => $esewa->formUrl(),
+                'fields' => $initiated['form'],
+                'amount' => $initiated['payment']->amount,
+            ]);
         }
 
         DB::transaction(function () use ($unpaid, $method, $request): void {

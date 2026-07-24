@@ -74,7 +74,7 @@
                         </div>
                         @error('payment_method') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
                         @error('payment') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
-                        <p class="mt-2 text-[11px] text-ink-soft/50">Online uses Khalti sandbox. Test ID 9800000000 · MPIN 1111 · OTP 987654.</p>
+                        <p class="mt-2 text-[11px] text-ink-soft/50">Online uses eSewa sandbox. Test ID 9806800001 · Password Nepal@123 · Token 123456.</p>
                     </div>
 
                     <button type="submit" class="w-full rounded-xl bg-gradient-to-br from-[#8b5e3c] to-[#5d4037] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95">

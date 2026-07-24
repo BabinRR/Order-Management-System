@@ -6,12 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\PayBillRequest;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Services\KhaltiPaymentService;
+use App\Services\EsewaPaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\Response;
 
 class BillController extends Controller
 {
@@ -37,12 +36,12 @@ class BillController extends Controller
             'unpaidTotal' => (int) $unpaid->sum('total'),
             'methods' => [
                 'cash' => 'Cash',
-                'online' => 'Online · Khalti',
+                'online' => 'Online · eSewa',
             ],
         ]);
     }
 
-    public function pay(PayBillRequest $request, KhaltiPaymentService $khalti): RedirectResponse|Response
+    public function pay(PayBillRequest $request, EsewaPaymentService $esewa): RedirectResponse|View
     {
         $table = (string) $request->session()->get('customer_table');
         $method = $request->validated('payment_method');
@@ -60,12 +59,10 @@ class BillController extends Controller
 
         if ($method === 'online') {
             try {
-                $payment = $khalti->initiateForOrders(
+                $initiated = $esewa->initiateForOrders(
                     orders: $unpaid,
                     tableNumber: $table,
                     source: Payment::SOURCE_CUSTOMER,
-                    returnUrl: route('payments.khalti.callback'),
-                    customerName: $request->session()->get('customer_name'),
                 );
             } catch (RuntimeException $exception) {
                 return redirect()
@@ -73,7 +70,11 @@ class BillController extends Controller
                     ->withErrors(['payment' => $exception->getMessage()]);
             }
 
-            return redirect()->away($payment->payment_url);
+            return view('payments.esewa-redirect', [
+                'formUrl' => $esewa->formUrl(),
+                'fields' => $initiated['form'],
+                'amount' => $initiated['payment']->amount,
+            ]);
         }
 
         DB::transaction(function () use ($unpaid, $method): void {

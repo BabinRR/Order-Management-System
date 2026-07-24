@@ -66,7 +66,7 @@
                             </div>
                             @error('payment_method') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
                             @error('payment') <p class="mt-1 text-xs font-medium text-[#a0522d]">{{ $message }}</p> @enderror
-                            <p class="mt-2 text-[11px] text-ink-soft/50">Online opens Khalti sandbox checkout. Test ID <span class="font-semibold">9800000000</span> · MPIN <span class="font-semibold">1111</span> · OTP <span class="font-semibold">987654</span>.</p>
+                            <p class="mt-2 text-[11px] text-ink-soft/50">Online opens eSewa sandbox. Test ID <span class="font-semibold">9806800001</span> · Password <span class="font-semibold">Nepal@123</span> · Token <span class="font-semibold">123456</span>.</p>
                         </div>
                         <button type="submit" class="w-full rounded-full bg-[#3e2723] px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5d4037]">
                             Complete payment · Rs {{ number_format($unpaidTotal) }}
